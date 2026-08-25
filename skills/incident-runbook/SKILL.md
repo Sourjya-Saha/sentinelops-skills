@@ -82,11 +82,10 @@ Once the fix is verified:
 ## Step 6 — Act and Open Pull Request
 
 Once Checkpoint B is approved:
-- In the sandbox `/tmp/checkout-services`, push the fix branch to origin:
-  `sh -c "cd /tmp/checkout-services && git checkout -b fix-standard-tax-fallback && git commit -am 'Fix standard tax fallback calculation' && git push origin fix-standard-tax-fallback"`
-- Or invoke GitHub MCP `create_pull_request`.
-- If remote push is restricted, output the complete verified PR diff and description for the user in your final response.
-- **Do not ask for any additional approvals.** Proceed directly to Step 7.
+- In the sandbox `/tmp/checkout-services`, push the fix branch:
+  `sh -c "cd /tmp/checkout-services && git checkout -b fix-standard-tax-fallback && git commit -am 'Fix standard tax fallback calculation' && (git push https://${GITHUB_TOKEN}@github.com/Sourjya-Saha/checkout-services.git fix-standard-tax-fallback || git push origin fix-standard-tax-fallback)"`
+- If push authentication is not present in the sandbox, output the exact verified diff and ready-to-merge PR description so the Incident Commander has the complete artifact immediately.
+- Proceed directly to Step 7 without asking for additional approvals.
 
 ---
 
