@@ -30,8 +30,7 @@ and writes to the real GitHub repository — inspecting commits, pushing
 files, opening a PR — happen exclusively through the GitHub MCP connector
 (`call_tool` with `mcp_server: "github"`). Never attempt `git push`,
 `git commit` with a remote, or any credential-based git operation from
-inside the sandbox shell — it will always fail, since no token or
-username is ever available there by design.
+inside the sandbox shell.
 
 ---
 
@@ -53,7 +52,7 @@ username is ever available there by design.
 
 **Delegate the following three questions to three subagents launched together in parallel**:
 
-1. **Subagent A (Git History & Diff Investigator)**: Inspect recent commits to `Sourjya-Saha/checkout-services` on `main` via GitHub MCP tools to identify the regression.
+1. **Subagent A (Git History & Diff Investigator)**: Inspect recent commits to `Sourjya-Saha/checkout-services` on `main` via GitHub MCP tools (`list_commits` / `get_commit`) to identify the regression.
 2. **Subagent B (Error & Log Investigator)**: Extract exact exception message and traceback from logs.
 3. **Subagent C (Database & Telemetry Investigator)**: Query `orders` and `users` tables in Supabase for user correlation.
 
@@ -74,10 +73,10 @@ username is ever available there by design.
 Once Checkpoint A is approved:
 - In the sandbox, clone a local working copy for verification only:
   `sh -c "git clone https://github.com/Sourjya-Saha/checkout-services.git /tmp/checkout-services && cd /tmp/checkout-services"`
-- Install dependencies before running any tests (e.g. `pip install -r backend/requirements.txt`) — do not assume a test runner is already present in a fresh clone.
+- Install dependencies before running tests: `sh -c "pip install -r backend/requirements.txt"`
 - Dynamically determine and apply the safe fix for the root cause, entirely within this local sandbox copy.
-- Run Python verification / pytest to prove it passes (200 OK).
-- This sandbox copy is for verification only — it is never pushed to or read from GitHub directly. Once verified, capture the final file contents; they will be sent to GitHub via the MCP connector in Step 6, not via `git push`.
+- Run Python verification / pytest to prove it passes (200 OK): `sh -c "pytest backend/tests"`
+- Once verified, capture the final file contents to be committed via the GitHub MCP connector in Step 6.
 
 ---
 
@@ -93,24 +92,26 @@ Once the fix is verified:
 
 ## Step 6 — Act and Open Pull Request
 
-Once Checkpoint B is approved, open the Pull Request using ONLY the TrueForge GitHub MCP connector — never a raw `git push` from inside the sandbox shell. The sandbox has no GitHub credentials injected into it; authentication lives entirely in the GitHub connector, so any `git push`/`git commit` attempt from the sandbox toward GitHub will always fail with a credentials error, regardless of retries.
+Once Checkpoint B is approved, create the branch, push the verified files, and open the Pull Request using the TrueForge GitHub MCP connector (`call_tool` with `mcp_server: "github"`):
 
-- Autonomously generate a descriptive branch name from the root cause (e.g. `fix-<issue-slug>`).
-- Call `call_tool` with `mcp_server: "github"`, `tool_name: "push_files"`:
-  - `owner`: `"Sourjya-Saha"`
-  - `repo`: `"checkout-services"`
-  - `branch`: the generated branch name
-  - `message`: commit message summarizing the verified fix
-  - `files`: array of `{ path: "<file-path>", content: "<verified-content-from-sandbox>" }` for all modified files (read the final verified content from the sandbox and pass it directly — do not attempt to git-push the sandbox's local commit)
-- Then call `call_tool` with `mcp_server: "github"`, `tool_name: "create_pull_request"`:
-  - `owner`: `"Sourjya-Saha"`
-  - `repo`: `"checkout-services"`
-  - `title`: concise title describing the fix
-  - `head`: the branch name used above
-  - `base`: `"main"`
-  - `body`: structured PR description with Incident ID, Root Cause, Verification Results, and Approval Record
-- If GitHub MCP tools are unavailable (empty tool list or failed call), do not retry more than once. State clearly that the connector needs to be checked, and provide the verified diff/PR content as a one-time fallback instead of attempting any sandbox-side git push.
-- Proceed directly to Step 7 without asking for additional approvals.
+1. **Generate a descriptive branch name** derived from the root cause (e.g. `fix-<issue-slug>`).
+2. **Push the modified files to GitHub**:
+   - Call `call_tool` with `mcp_server: "github"`, `tool_name: "push_files"` (or `create_or_update_file`):
+     - `owner`: `"Sourjya-Saha"`
+     - `repo`: `"checkout-services"`
+     - `branch`: the generated branch name
+     - `message`: commit message summarizing the verified fix
+     - `files`: array of `{ path: "<file-path>", content: "<verified-content>" }` for all modified files
+3. **Create the Pull Request**:
+   - Call `call_tool` with `mcp_server: "github"`, `tool_name: "create_pull_request"`:
+     - `owner`: `"Sourjya-Saha"`
+     - `repo`: `"checkout-services"`
+     - `title`: concise title describing the fix
+     - `head`: the branch name used above
+     - `base`: `"main"`
+     - `body`: structured PR description with Incident ID, Root Cause Analysis, Verification Results, and Approval Record
+4. Extract the created PR URL from the tool output (`html_url` or `url`).
+5. Proceed directly to Step 7 without asking for additional approvals.
 
 ---
 
@@ -118,13 +119,13 @@ Once Checkpoint B is approved, open the Pull Request using ONLY the TrueForge Gi
 
 1. Write a structured incident record to the **`incidents`** table in Supabase via database connector or `POST /incidents`:
    - `id`: Dynamic Incident ID
-   - `status`: `resolved` (or `fix_verified_pr_pending` if Step 6 could not complete)
+   - `status`: `resolved`
    - `error_message`: Error message captured
    - `stack_trace`: Stack trace details
    - `endpoint`: `/checkout`
    - `session_id`: TrueForge session ID
    - `root_cause`: Autonomous root cause explanation
-   - `pr_url`: The real PR URL returned by `create_pull_request` (never a constructed/guessed URL)
+   - `pr_url`: The real PR URL returned by `create_pull_request`
    - `resolved_at`: ISO timestamp
 
 2. **Conclude your final response using this structured format:**
@@ -149,7 +150,7 @@ If you want, I can also summarize the root cause and fix in a short incident not
 
 ## Guardrails
 
-- Never fabricate a PR URL. Only use the exact URL returned by the `create_pull_request` tool call.
+- Never fabricate a PR URL. Only use the real URL returned by the `create_pull_request` tool call.
 - Never attempt GitHub authentication from inside the sandbox shell.
 - Never fabricate log lines, commit contents, file contents, or database rows.
 - If a tool/connector is not available, explicitly state the gap rather than hallucinating, and do not retry the same failing action more than once without new information.
