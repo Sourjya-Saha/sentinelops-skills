@@ -82,24 +82,40 @@ Once the fix is verified:
 ## Step 6 — Act and Open Pull Request
 
 Once Checkpoint B is approved:
-- In the sandbox `/tmp/checkout-services`, push the fix branch:
-  `sh -c "cd /tmp/checkout-services && git checkout -b fix-standard-tax-fallback && git commit -am 'Fix standard tax fallback calculation' && (git push https://${GITHUB_TOKEN}@github.com/Sourjya-Saha/checkout-services.git fix-standard-tax-fallback || git push origin fix-standard-tax-fallback)"`
-- If push authentication is not present in the sandbox, output the exact verified diff and ready-to-merge PR description so the Incident Commander has the complete artifact immediately.
+- In the sandbox `/tmp/checkout-services`, push the fix branch to origin:
+  `sh -c "cd /tmp/checkout-services && git checkout -b fix-incident-patch && git commit -am 'Fix production regression' && (git push https://${GITHUB_TOKEN}@github.com/Sourjya-Saha/checkout-services.git fix-incident-patch || git push origin fix-incident-patch)"`
+- Or use GitHub MCP `create_pull_request`.
 - Proceed directly to Step 7 without asking for additional approvals.
 
 ---
 
-## Step 7 — Record Incident to Persistent Memory (Supabase)
+## Step 7 — Record Incident to Persistent Memory & Conclude
 
-Write a structured incident record to the **`incidents`** table in Supabase via database connector or `POST /incidents`:
-- `id`: Incident ID
-- `status`: `resolved`
-- `error_message`: Error message captured
-- `stack_trace`: Stack trace details
-- `endpoint`: `/checkout`
-- `session_id`: TrueForge session ID
-- `root_cause`: Exact root cause explanation
-- `pr_url`: GitHub Pull Request URL (or branch patch)
-- `resolved_at`: ISO timestamp
+1. Write a structured incident record to the **`incidents`** table in Supabase via database connector or `POST /incidents`:
+   - `id`: Incident ID
+   - `status`: `resolved`
+   - `error_message`: Error message captured
+   - `stack_trace`: Stack trace details
+   - `endpoint`: `/checkout`
+   - `session_id`: TrueForge session ID
+   - `root_cause`: Exact root cause explanation
+   - `pr_url`: GitHub Pull Request URL
+   - `resolved_at`: ISO timestamp
 
-Summarize the entire incident lifecycle in your closing response so the Incident Commander can reference it anytime.
+2. **Conclude your final response using this structured format:**
+
+```markdown
+Done — I drafted, verified, and opened a PR without merging it.
+
+### What I changed:
+- <concise summary of files and fix applied>
+
+### Verification:
+- Ran `pytest backend/tests/test_checkout.py`
+- Result: <number> passed
+
+### PR:
+[https://github.com/Sourjya-Saha/checkout-services/pull/<number>](https://github.com/Sourjya-Saha/checkout-services/pull/<number>)
+
+If you want, I can also summarize the root cause and fix in a short incident note for your team.
+```
