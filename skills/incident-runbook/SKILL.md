@@ -34,7 +34,7 @@ Never request extra approvals outside of these two checkpoints.
 
 ## Step 1 — Open the incident
 
-- Create or continue a session for this incident. Give it a structured ID, e.g. `INC-YYYYMMDD-checkout`.
+- Create or continue a session for this incident. Generate a dynamic ID (e.g. `INC-YYYYMMDD-<issue>`).
 - State in your response that the investigation has commenced.
 
 ---
@@ -43,7 +43,7 @@ Never request extra approvals outside of these two checkpoints.
 
 **Delegate the following three questions to three subagents launched together in parallel**:
 
-1. **Subagent A (Git History & Diff Investigator)**: Inspect recent commits to `Sourjya-Saha/checkout-services` on `main`.
+1. **Subagent A (Git History & Diff Investigator)**: Inspect recent commits to `Sourjya-Saha/checkout-services` on `main` to identify the regression.
 2. **Subagent B (Error & Log Investigator)**: Extract exact exception message and traceback from logs.
 3. **Subagent C (Database & Telemetry Investigator)**: Query `orders` and `users` tables in Supabase for user correlation.
 
@@ -64,7 +64,7 @@ Never request extra approvals outside of these two checkpoints.
 Once Checkpoint A is approved:
 - In the sandbox (or `/tmp/checkout-services`), clone repository:
   `sh -c "git clone https://github.com/Sourjya-Saha/checkout-services.git /tmp/checkout-services && cd /tmp/checkout-services"`
-- Apply the safe fix to resolve the root cause.
+- Dynamically determine and apply the safe fix for the root cause.
 - Run Python verification / pytest to prove it passes (200 OK).
 
 ---
@@ -82,26 +82,27 @@ Once the fix is verified:
 ## Step 6 — Act and Open Pull Request
 
 Once Checkpoint B is approved:
-- In the sandbox `/tmp/checkout-services`, push the fix branch to origin:
-  `sh -c "cd /tmp/checkout-services && git checkout -b fix-incident-patch && git commit -am 'Fix production regression' && (git push https://${GITHUB_TOKEN}@github.com/Sourjya-Saha/checkout-services.git fix-incident-patch || git push origin fix-incident-patch)"`
+- Autonomously generate a descriptive branch name from the root cause (e.g. `fix-<issue-slug>`).
+- In the sandbox `/tmp/checkout-services`, push the branch:
+  `sh -c "cd /tmp/checkout-services && git checkout -b <branch-name> && git commit -am '<dynamic-commit-message>' && (git push https://${GITHUB_TOKEN}@github.com/Sourjya-Saha/checkout-services.git <branch-name> || git push origin <branch-name>)"`
 - Or use GitHub MCP `create_pull_request`.
-- Always generate the direct GitHub PR URL for the incident:
-  `https://github.com/Sourjya-Saha/checkout-services/pull/new/fix-incident-patch`
-- Proceed directly to Step 7 and conclude with the final response.
+- Construct the GitHub PR link using your generated branch name:
+  `https://github.com/Sourjya-Saha/checkout-services/pull/new/<branch-name>` (or the actual PR URL if created).
+- Proceed directly to Step 7 without asking for additional approvals.
 
 ---
 
 ## Step 7 — Record Incident to Persistent Memory & Conclude
 
 1. Write a structured incident record to the **`incidents`** table in Supabase via database connector or `POST /incidents`:
-   - `id`: Incident ID
+   - `id`: Dynamic Incident ID
    - `status`: `resolved`
    - `error_message`: Error message captured
    - `stack_trace`: Stack trace details
    - `endpoint`: `/checkout`
    - `session_id`: TrueForge session ID
-   - `root_cause`: Exact root cause explanation
-   - `pr_url`: `https://github.com/Sourjya-Saha/checkout-services/pull/new/fix-incident-patch`
+   - `root_cause`: Autonomous root cause explanation
+   - `pr_url`: The PR link constructed in Step 6
    - `resolved_at`: ISO timestamp
 
 2. **Conclude your final response using this structured format:**
@@ -117,7 +118,7 @@ Done — I drafted, verified, and opened a PR without merging it.
 - Result: <number> passed
 
 ### PR:
-[https://github.com/Sourjya-Saha/checkout-services/pull/new/fix-incident-patch](https://github.com/Sourjya-Saha/checkout-services/pull/new/fix-incident-patch)
+[<pr-url>](<pr-url>)
 
 If you want, I can also summarize the root cause and fix in a short incident note for your team.
 ```
