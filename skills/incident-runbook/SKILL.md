@@ -92,11 +92,13 @@ Once the fix is verified:
 
 ## Step 6 — Act and Open Pull Request
 
-Once Checkpoint B is approved, create the branch, push the verified files, and open the Pull Request using the TrueForge GitHub MCP connector (`call_tool` with `mcp_server: "github"`):
+Once Checkpoint B is approved, immediately open the Pull Request using the TrueForge GitHub MCP connector (`call_tool` with `mcp_server: "github"`).
+
+**CRITICAL INSTRUCTION**: Do NOT call `list_tools` on `github` first. Invoke `call_tool` directly with `tool_name: "push_files"`, then call `call_tool` with `tool_name: "create_pull_request"`.
 
 1. **Generate a descriptive branch name** derived from the root cause (e.g. `fix-<issue-slug>`).
 2. **Push the modified files to GitHub**:
-   - Call `call_tool` with `mcp_server: "github"`, `tool_name: "push_files"` (or `create_or_update_file`):
+   - Call `call_tool` with `mcp_server: "github"`, `tool_name: "push_files"`:
      - `owner`: `"Sourjya-Saha"`
      - `repo`: `"checkout-services"`
      - `branch`: the generated branch name
