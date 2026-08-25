@@ -81,11 +81,13 @@ Collect findings from all three subagents to form a complete picture.
 ## Step 4 — Verify in Sandbox
 
 Once Checkpoint A is approved:
-- Request a sandboxed execution environment (Daytona).
+- In the sandboxed execution environment (Daytona), clone the target repository:
+  `git clone https://github.com/Sourjya-Saha/checkout-services.git /tmp/checkout-services && cd /tmp/checkout-services`
+  (or check out `Sourjya-Saha/checkout-services`).
 - Check out the commit BEFORE the suspected regression and the commit AT the suspected regression.
 - Reproduce the failure against a guest-checkout request on both commits: confirm it fails only on the newer commit and succeeds on the older one.
-- In the sandbox, apply the candidate fix (adding a fallback for `currency_info is None` in `_resolve_currency_symbol`).
-- Re-run the reproduction test in the sandbox to prove it now passes (200 OK).
+- In the sandbox, apply the candidate fix (adding a safe fallback for `tax_region` / `currency_info` in `backend/app/payment_processor.py`).
+- Re-run the reproduction test in the sandbox (`pytest` or inline script) to prove it now passes (200 OK).
 
 ---
 
