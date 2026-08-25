@@ -117,16 +117,16 @@ Once Checkpoint B is approved, open the Pull Request using the TrueForge GitHub 
   1. Call `call_tool` with `mcp_server: "github"`, `tool_name: "push_files"`:
      - `owner`: `"Sourjya-Saha"`
      - `repo`: `"checkout-services"`
-     - `branch`: `fix-regional-tax-fallback` (or appropriate fix branch)
-     - `message`: Commit message describing the verified fix
-     - `files`: Array of `{ path: "<file-path>", content: "<verified-content>" }`
+     - `branch`: A descriptive branch name derived from the root cause (e.g. `fix-<issue-slug>`)
+     - `message`: Commit message summarizing the verified fix
+     - `files`: Array of `{ path: "<file-path>", content: "<verified-content>" }` for all modified files
   2. Call `call_tool` with `mcp_server: "github"`, `tool_name: "create_pull_request"`:
      - `owner`: `"Sourjya-Saha"`
      - `repo`: `"checkout-services"`
-     - `title`: Concise PR title
-     - `head`: `fix-regional-tax-fallback` (or fix branch name)
+     - `title`: Concise title describing what was fixed
+     - `head`: The fix branch name used in `push_files`
      - `base`: `"main"`
-     - `body`: Structured PR description containing Incident ID, Root Cause Analysis, Sandbox Verification Results, and Human Approval Record.
+     - `body`: Structured markdown PR description containing Incident ID, Root Cause Analysis, Sandbox Verification Results, and Human Approval Record.
 - Allow Qodo (PR-Agent) / CodeAnt AI to review the PR automatically.
 
 ---
@@ -134,7 +134,7 @@ Once Checkpoint B is approved, open the Pull Request using the TrueForge GitHub 
 ## Step 7 — Record Incident to Persistent Memory (Supabase)
 
 Before concluding the incident response, write a structured incident record to the **`incidents`** table in Supabase via the database connector or `POST /incidents` with the following schema:
-- `id`: Incident ID (e.g. `INC-20260825-checkout`)
+- `id`: Incident ID (e.g. `INC-YYYYMMDD-checkout`)
 - `status`: `resolved`
 - `error_message`: Error message captured
 - `stack_trace`: Stack trace details
