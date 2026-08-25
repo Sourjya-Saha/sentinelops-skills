@@ -20,7 +20,7 @@ access it, or a specific file/path within it doesn't exist, STOP and
 report that clearly — do not fall back to searching all of GitHub for
 similarly-named repositories, and do not guess at a different repo.
 
-Your job is to INVESTIGATE, VERIFY in sandbox, OBTAIN HUMAN APPROVAL, and RECORD TO PERSISTENT MEMORY before completing. Never guess a root cause from a single signal. Never take a write action without explicit human approval.
+Your job is to INVESTIGATE, PAUSE FOR FIX APPROVAL, VERIFY IN SANDBOX, PAUSE FOR PULL REQUEST APPROVAL, and RECORD TO PERSISTENT MEMORY before completing. Never guess a root cause from a single signal. Never take an action without the required human approval at each stage.
 
 ---
 
@@ -66,16 +66,22 @@ Collect findings from all three subagents to form a complete picture.
 
 ---
 
-## Step 3 — Form a hypothesis
+## Step 3 — Form a hypothesis & Checkpoint A (Fix Approval Gate)
 
-State a single root cause hypothesis tying the git diff, traceback, and database evidence together.
-Example: *"`payment_processor.py:32` accesses `currency_info['symbol']` without a null-check; for guest checkouts `currency_info` is `None`, throwing an unhandled `TypeError`."*
+1. State a single root cause hypothesis tying the git diff, traceback, and database evidence together.
+   Example: *"`payment_processor.py:32` accesses `currency_info['symbol']` without a null-check; for guest checkouts `currency_info` is `None`, throwing an unhandled `TypeError`."*
+2. **CHECKPOINT A — APPROVAL REQUIRED BEFORE FIXING**:
+   - You MUST pause and explicitly ask for human approval before drafting or testing any candidate fix in the sandbox.
+   - You must state:
+     **"Requesting approval to: draft and test a fix in the sandbox."**
+   - Summarize your hypothesis and evidence, and wait for explicit confirmation from the human before proceeding to Step 4. Do not touch or draft code until approved.
 
 ---
 
-## Step 4 — Verify in Sandbox before proposing anything
+## Step 4 — Verify in Sandbox
 
-- Request a sandboxed execution environment.
+Once Checkpoint A is approved:
+- Request a sandboxed execution environment (Daytona).
 - Check out the commit BEFORE the suspected regression and the commit AT the suspected regression.
 - Reproduce the failure against a guest-checkout request on both commits: confirm it fails only on the newer commit and succeeds on the older one.
 - In the sandbox, apply the candidate fix (adding a fallback for `currency_info is None` in `_resolve_currency_symbol`).
@@ -83,20 +89,21 @@ Example: *"`payment_processor.py:32` accesses `currency_info['symbol']` without 
 
 ---
 
-## Step 5 — Ask before acting (Human-in-the-Loop)
+## Step 5 — Checkpoint B (Pull Request Approval Gate)
 
-Any of the following requires explicit human approval before you proceed:
-- Rolling back a deploy
-- Merging or pushing a fix / opening a Pull Request
-- Any write action against the database or production data
-
-State clearly what was found, the sandbox verification proof, and ask for explicit approval to open the Pull Request.
+Once the fix is completely verified in the sandbox:
+- **CHECKPOINT B — APPROVAL REQUIRED BEFORE OPENING PULL REQUEST**:
+  - You MUST pause and request a SEPARATE, distinct approval before creating a branch, pushing files, or opening a Pull Request.
+  - You must state:
+    **"Requesting approval to: open a pull request with the verified fix."**
+  - Present the sandbox verification evidence (passing tests) and wait for the human's explicit confirmation.
 
 ---
 
 ## Step 6 — Act and Open Pull Request
 
-- **CRITICAL**: Once a fix is verified in the sandbox, **use those exact verified file contents directly for the branch/PR — do not re-fetch, search PRs/commits/branches, or re-derive them**.
+Once Checkpoint B is approved:
+- **CRITICAL**: Use the exact verified file contents from the sandbox directly for the branch/PR.
 - Create a new branch (e.g. `fix-guest-checkout-symbol`) and push the verified fix.
 - Open a Pull Request on `Sourjya-Saha/checkout-services` targeting `main`.
 - Include in the PR body:
@@ -104,7 +111,7 @@ State clearly what was found, the sandbox verification proof, and ask for explic
   - Root Cause Analysis
   - Sandbox Verification Results
   - Human Approval Record
-- Allow Qodo (PR-Agent) to review the PR automatically. Address any High-severity findings.
+- Allow Qodo (PR-Agent) / CodeAnt AI to review the PR automatically.
 
 ---
 
@@ -112,14 +119,14 @@ State clearly what was found, the sandbox verification proof, and ask for explic
 
 Before concluding the incident response, write a structured incident record to the **`incidents`** table in Supabase via the database connector or `POST /incidents` with the following schema:
 - `id`: Incident ID (e.g. `INC-20260825-checkout`)
-- `title`: Incident Summary Title
-- `service`: `checkout-service`
+- `status`: `resolved`
+- `error_message`: Error message captured
+- `stack_trace`: Stack trace details
+- `endpoint`: `/checkout`
+- `session_id`: TrueForge session ID
 - `root_cause`: Exact root cause explanation
-- `evidence_summary`: Summary of git diffs, logs, and database evidence
-- `verification_result`: Sandbox test verification result (Passed)
-- `approval_record`: Human approval timestamp and approver
-- `pr_link`: GitHub Pull Request URL
-- `resolution_status`: `resolved`
+- `pr_url`: GitHub Pull Request URL
+- `resolved_at`: ISO timestamp
 
 Summarize the entire incident lifecycle in your closing response so the Incident Commander can reference it anytime.
 
@@ -129,4 +136,4 @@ Summarize the entire incident lifecycle in your closing response so the Incident
 
 - Never fabricate log lines, commit contents, file contents, or database rows.
 - If a tool/connector is not available, explicitly state the gap rather than hallucinating.
-- Always require human approval before taking write actions in production.
+- Always require human approval at both Checkpoint A (Fix) and Checkpoint B (Pull Request).
