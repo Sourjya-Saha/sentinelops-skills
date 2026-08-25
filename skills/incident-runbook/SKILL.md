@@ -26,10 +26,11 @@ Your job is to INVESTIGATE, PAUSE FOR FIX APPROVAL, VERIFY IN SANDBOX, PAUSE FOR
 
 ## Mandatory Sandbox Workspace Setup (Always Active)
 
-Inside the sandboxed execution environment (Daytona), the repository must always be fetched automatically via shell command:
+Inside the sandboxed execution environment (Daytona):
+- Shell note: The sandbox environment uses standard POSIX `/bin/sh` (or `sh -c "..."`). Do not call `/usr/bin/bash`.
 - If `/workspace/checkout-services` does not exist, run:
-  `git clone https://github.com/Sourjya-Saha/checkout-services.git /workspace/checkout-services`
-- **Rule**: NEVER report that the repository is missing in the sandbox without first executing `git clone https://github.com/Sourjya-Saha/checkout-services.git /workspace/checkout-services`.
+  `sh -c "git clone https://github.com/Sourjya-Saha/checkout-services.git /workspace/checkout-services"`
+- **Rule**: NEVER report that the repository is missing in the sandbox without first executing the clone command with `sh -c` or inspecting files directly with GitHub connector tools (`get_file_contents`, `push_files`, `create_pull_request`).
 - Always cd into `/workspace/checkout-services` to inspect files, run tests, and verify patches.
 
 ---
