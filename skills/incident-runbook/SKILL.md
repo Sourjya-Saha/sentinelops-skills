@@ -30,6 +30,10 @@ Inside the sandboxed execution environment (Daytona):
 - Shell note: The sandbox environment uses standard POSIX `/bin/sh` (or `sh -c "..."`). Do not call `/usr/bin/bash`.
 - If `/workspace/checkout-services` does not exist, run:
   `sh -c "git clone https://github.com/Sourjya-Saha/checkout-services.git /workspace/checkout-services"`
+- **Immediately after cloning (every time, not just the first time), install dependencies before running any tests or reproduction commands:**
+  - If a `backend/requirements.txt` exists: `sh -c "cd /workspace/checkout-services/backend && pip install -r requirements.txt"`
+  - If a `frontend/package.json` exists and frontend code is relevant to the incident: `sh -c "cd /workspace/checkout-services/frontend && npm install"`
+  - Do not assume `pytest` or any other test tool is already present in a fresh clone — a missing dependency is not evidence that the tool doesn't exist, it means install was skipped.
 - **Rule**: NEVER report that the repository is missing in the sandbox without first executing the clone command with `sh -c` or inspecting files directly with GitHub connector tools (`get_file_contents`, `push_files`, `create_pull_request`).
 - Always cd into `/workspace/checkout-services` to inspect files, run tests, and verify patches.
 
@@ -88,17 +92,13 @@ Collect findings from all three subagents to form a complete picture.
 
 ---
 
-## Step 4 — Verify in Sandbox & Dependency Installation
+## Step 4 — Verify in Sandbox
 
 Once Checkpoint A is approved:
-- Clone or open `/workspace/checkout-services` in the sandbox:
-  `sh -c "git clone https://github.com/Sourjya-Saha/checkout-services.git /workspace/checkout-services && cd /workspace/checkout-services"`
-- **Install Service Dependencies**:
-  Right after cloning, install the service dependencies inside the cloned repository before running tests to ensure `pytest` and required runtime packages are present:
-  `sh -c "pip install -r backend/requirements.txt || pip install pytest"` (or `npm install` for Node services).
+- Clone or open `/workspace/checkout-services` in the sandbox, then install dependencies as described in "Mandatory Sandbox Workspace Setup" above before proceeding.
 - Reproduce the failure against the failing test / endpoint to confirm the root cause.
 - In the sandbox, draft and apply the candidate fix to resolve the root cause safely.
-- Re-run the reproduction test / pytest in the sandbox to prove it now passes (200 OK).
+- Re-run the reproduction test / pytest in the sandbox to prove it now passes (200 OK). If a test runner genuinely cannot be made to run after installing dependencies, fall back to direct function-level verification and clearly say you did so and why.
 
 ---
 
@@ -131,6 +131,10 @@ Once Checkpoint B is approved, open the Pull Request using the TrueForge GitHub 
      - `base`: `"main"`
      - `body`: Structured markdown PR description containing Incident ID, Root Cause Analysis, Sandbox Verification Results, and Human Approval Record.
 - Allow Qodo (PR-Agent) / CodeAnt AI to review the PR automatically.
+- **If GitHub tools are unavailable (e.g. `call_tool` for the github server returns no usable tools, or fails immediately), DO NOT repeat the identical attempt more than once.** Instead:
+  1. Clearly state to the human: "The GitHub connector appears unavailable in this session. This needs to be checked/reconnected before I can open a PR — retrying will not fix this."
+  2. As a fallback, provide the exact diff/patch content and a drafted PR title/body once, so the human can apply it manually if needed.
+  3. Stop and wait for the human to either fix the connector and re-approve, or proceed manually.
 
 ---
 
@@ -147,6 +151,8 @@ Before concluding the incident response, write a structured incident record to t
 - `pr_url`: GitHub Pull Request URL
 - `resolved_at`: ISO timestamp
 
+If Step 6 could not complete due to an unavailable connector, still write a record with `status: "fix_verified_pr_pending"` and note the blocker in `root_cause`, so the incident isn't silently lost from memory.
+
 Summarize the entire incident lifecycle in your closing response so the Incident Commander can reference it anytime.
 
 ---
@@ -154,6 +160,5 @@ Summarize the entire incident lifecycle in your closing response so the Incident
 ## Guardrails
 
 - Never fabricate log lines, commit contents, file contents, or database rows.
-- If a tool/connector is not available, explicitly state the gap rather than hallucinating.
+- If a tool/connector is not available, explicitly state the gap rather than hallucinating, and do not retry the same failing action more than once without new information.
 - Always require human approval at both Checkpoint A (Fix) and Checkpoint B (Pull Request).
-- **No-Retry Guardrail for Connector Failures**: If GitHub tools are unavailable after Checkpoint B approval, do NOT repeat the identical attempt in a loop. State clearly that the GitHub connector needs to be checked/reconnected by a human in Settings → Connectors, and stop — offer the prepared diff/PR content as a fallback exactly once.
