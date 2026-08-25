@@ -15,40 +15,20 @@ You are acting as the Autonomous Incident Commander for the target application:
 `Sourjya-Saha/checkout-services`
 
 Do not search GitHub broadly for "checkout-service" or similar terms.
-This is the only repository relevant to this runbook. If you cannot
-access it, or a specific file/path within it doesn't exist, STOP and
-report that clearly — do not fall back to searching all of GitHub for
-similarly-named repositories, and do not guess at a different repo.
+This is the only repository relevant to this runbook.
 
-Your job is to INVESTIGATE, PAUSE FOR FIX APPROVAL, VERIFY IN SANDBOX (OR GITHUB MCP), PAUSE FOR PULL REQUEST APPROVAL, and RECORD TO PERSISTENT MEMORY before completing. Never guess a root cause from a single signal. Never take an action without the required human approval at each stage.
+Your job is strictly structured around **TWO DISTINCT APPROVAL GATES**:
+1. **Checkpoint A**: Approval to draft & verify fix in sandbox.
+2. **Checkpoint B**: Approval to open Pull Request on GitHub.
 
----
-
-## Mandatory Workspace & GitHub MCP Setup
-
-1. **GitHub MCP Connector (Primary & Fallback)**:
-   - TrueForge provides direct GitHub MCP tools via `call_tool` with `mcp_server: "github"`:
-     - `get_file_contents` (fetch source files directly from repo)
-     - `list_commits` / `get_commit` (inspect git history and diffs)
-     - `push_files` (push fixed files to branch)
-     - `create_pull_request` (open PR)
-2. **Sandbox Environment**:
-   - If using the sandbox, clone `/workspace/checkout-services` and install dependencies.
-   - **Crucial Rule**: If the sandbox shell fails or returns `fork/exec /usr/bin/bash: no such file or directory`, DO NOT GET STUCK. Immediately use `call_tool` (`mcp_server: "github"`, `tool_name: "get_file_contents"`) to inspect and draft the fix.
+Never request extra approvals outside of these two checkpoints.
 
 ---
 
-## Memory First: Check Past Incidents
+## Step 0 — Orient yourself efficiently
 
-If asked about a past incident (or if investigating a recurring issue), **always query the `incidents` table in Supabase first** via the database connector before saying you don't know or starting from scratch.
-
----
-
-## Step 0 — Orient yourself efficiently (do this first, every time)
-
-Before running broad searches:
-1. Use `call_tool` with `mcp_server: "github"`, `tool_name: "get_file_contents"` to fetch the file referenced in the incident stack trace directly.
-2. Limit yourself to targeted orientation tool calls.
+1. Fetch the repository structure once from `Sourjya-Saha/checkout-services` or clone into `/tmp/checkout-services`.
+2. Inspect the file referenced in the incident stack trace directly.
 
 ---
 
@@ -61,94 +41,66 @@ Before running broad searches:
 
 ## Step 2 — Gather evidence via Parallel Subagents
 
-Do not run investigation steps as a slow serial monologue. **Delegate the following three questions to three subagents launched together in parallel**:
+**Delegate the following three questions to three subagents launched together in parallel**:
 
-1. **Subagent A (Git History & Diff Investigator)**:
-   - Inspect recent commits to `Sourjya-Saha/checkout-services` on the `main` branch using GitHub MCP tools.
-   - Record the suspected regression commit SHA, commit author, commit message, and changed lines.
-
-2. **Subagent B (Error & Log Investigator)**:
-   - Extract the exact exception message and traceback from the incident report / backend logs.
-
-3. **Subagent C (Database & Telemetry Investigator)**:
-   - Query the `orders` and `users` tables in Supabase via the Postgres/Supabase connector.
-   - Confirm user correlation (e.g., whether the failure is isolated to specific conditions or parameters).
-
-Collect findings from all three subagents to form a complete picture.
+1. **Subagent A (Git History & Diff Investigator)**: Inspect recent commits to `Sourjya-Saha/checkout-services` on `main`.
+2. **Subagent B (Error & Log Investigator)**: Extract exact exception message and traceback from logs.
+3. **Subagent C (Database & Telemetry Investigator)**: Query `orders` and `users` tables in Supabase for user correlation.
 
 ---
 
-## Step 3 — Form a hypothesis & Checkpoint A (Fix Approval Gate)
+## Step 3 — Form a hypothesis & CHECKPOINT A (Approval Gate 1 of 2)
 
-1. State a single root cause hypothesis tying the git diff, traceback, and database evidence together based on the real signals gathered.
+1. State a single root cause hypothesis tying git diff, traceback, and DB signals together.
 2. **CHECKPOINT A — APPROVAL REQUIRED BEFORE FIXING**:
-   - You MUST pause and explicitly ask for human approval before drafting or testing any candidate fix.
-   - You must state:
+   - You MUST pause and ask:
      **"Requesting approval to: draft and test a fix in the sandbox."**
-   - Summarize your hypothesis and evidence, and wait for explicit confirmation from the human before proceeding to Step 4. Do not touch or draft code until approved.
+   - Wait for explicit human confirmation before proceeding to Step 4.
 
 ---
 
-## Step 4 — Verify and Draft Candidate Fix
+## Step 4 — Draft & Verify Fix in Sandbox
 
 Once Checkpoint A is approved:
-- If the sandbox shell is available, run tests in `/workspace/checkout-services`.
-- If the sandbox shell is unavailable (e.g. `fork/exec /usr/bin/bash`), fetch the file via GitHub MCP `get_file_contents` (`mcp_server: "github"`), inspect the exact failing line, and draft the minimal safe fix.
-- Prepare the verified patch and explain what was changed.
+- In the sandbox (or `/tmp/checkout-services`), clone repository:
+  `sh -c "git clone https://github.com/Sourjya-Saha/checkout-services.git /tmp/checkout-services && cd /tmp/checkout-services"`
+- Apply the safe fix to resolve the root cause.
+- Run Python verification / pytest to prove it passes (200 OK).
 
 ---
 
-## Step 5 — Checkpoint B (Pull Request Approval Gate)
+## Step 5 — CHECKPOINT B (Approval Gate 2 of 2)
 
-Once the fix is drafted and verified:
+Once the fix is verified:
 - **CHECKPOINT B — APPROVAL REQUIRED BEFORE OPENING PULL REQUEST**:
-  - You MUST pause and request a SEPARATE, distinct approval before creating a branch, pushing files, or opening a Pull Request.
-  - You must state:
-    **"Requesting approval to: open a pull request with the verified fix."**
-  - Present the candidate fix and wait for the human's explicit confirmation.
+  - You MUST pause and ask:
+     **"Requesting approval to: open a pull request with the verified fix."**
+  - Present the verified fix proof and wait for explicit human confirmation.
 
 ---
 
 ## Step 6 — Act and Open Pull Request
 
-Once Checkpoint B is approved, open the Pull Request using the TrueForge GitHub connector:
-- Use TrueForge's GitHub MCP tools directly via `call_tool`:
-  1. Call `call_tool` with `mcp_server: "github"`, `tool_name: "push_files"`:
-     - `owner`: `"Sourjya-Saha"`
-     - `repo`: `"checkout-services"`
-     - `branch`: A descriptive branch name derived from the root cause (e.g. `fix-<issue-slug>`)
-     - `message`: Commit message summarizing the verified fix
-     - `files`: Array of `{ path: "<file-path>", content: "<verified-content>" }` for all modified files
-  2. Call `call_tool` with `mcp_server: "github"`, `tool_name: "create_pull_request"`:
-     - `owner`: `"Sourjya-Saha"`
-     - `repo`: `"checkout-services"`
-     - `title`: Concise title describing what was fixed
-     - `head`: The fix branch name used in `push_files`
-     - `base`: `"main"`
-     - `body`: Structured markdown PR description containing Incident ID, Root Cause Analysis, Verification Results, and Human Approval Record.
-- Allow Qodo (PR-Agent) / CodeAnt AI to review the PR automatically.
+Once Checkpoint B is approved:
+- In the sandbox `/tmp/checkout-services`, push the fix branch to origin:
+  `sh -c "cd /tmp/checkout-services && git checkout -b fix-standard-tax-fallback && git commit -am 'Fix standard tax fallback calculation' && git push origin fix-standard-tax-fallback"`
+- Or invoke GitHub MCP `create_pull_request`.
+- If remote push is restricted, output the complete verified PR diff and description for the user in your final response.
+- **Do not ask for any additional approvals.** Proceed directly to Step 7.
 
 ---
 
 ## Step 7 — Record Incident to Persistent Memory (Supabase)
 
-Before concluding the incident response, write a structured incident record to the **`incidents`** table in Supabase via the database connector or `POST /incidents` with the following schema:
-- `id`: Incident ID (e.g. `INC-YYYYMMDD-checkout`)
+Write a structured incident record to the **`incidents`** table in Supabase via database connector or `POST /incidents`:
+- `id`: Incident ID
 - `status`: `resolved`
 - `error_message`: Error message captured
 - `stack_trace`: Stack trace details
 - `endpoint`: `/checkout`
 - `session_id`: TrueForge session ID
 - `root_cause`: Exact root cause explanation
-- `pr_url`: GitHub Pull Request URL
+- `pr_url`: GitHub Pull Request URL (or branch patch)
 - `resolved_at`: ISO timestamp
 
 Summarize the entire incident lifecycle in your closing response so the Incident Commander can reference it anytime.
-
----
-
-## Guardrails
-
-- Never fabricate log lines, commit contents, file contents, or database rows.
-- If a tool/connector is not available, explicitly state the gap rather than hallucinating.
-- Always require human approval at both Checkpoint A (Fix) and Checkpoint B (Pull Request).
