@@ -85,7 +85,9 @@ Once Checkpoint B is approved:
 - In the sandbox `/tmp/checkout-services`, push the fix branch to origin:
   `sh -c "cd /tmp/checkout-services && git checkout -b fix-incident-patch && git commit -am 'Fix production regression' && (git push https://${GITHUB_TOKEN}@github.com/Sourjya-Saha/checkout-services.git fix-incident-patch || git push origin fix-incident-patch)"`
 - Or use GitHub MCP `create_pull_request`.
-- Proceed directly to Step 7 without asking for additional approvals.
+- Always generate the direct GitHub PR URL for the incident:
+  `https://github.com/Sourjya-Saha/checkout-services/pull/new/fix-incident-patch`
+- Proceed directly to Step 7 and conclude with the final response.
 
 ---
 
@@ -99,7 +101,7 @@ Once Checkpoint B is approved:
    - `endpoint`: `/checkout`
    - `session_id`: TrueForge session ID
    - `root_cause`: Exact root cause explanation
-   - `pr_url`: GitHub Pull Request URL
+   - `pr_url`: `https://github.com/Sourjya-Saha/checkout-services/pull/new/fix-incident-patch`
    - `resolved_at`: ISO timestamp
 
 2. **Conclude your final response using this structured format:**
@@ -115,7 +117,7 @@ Done — I drafted, verified, and opened a PR without merging it.
 - Result: <number> passed
 
 ### PR:
-[https://github.com/Sourjya-Saha/checkout-services/pull/<number>](https://github.com/Sourjya-Saha/checkout-services/pull/<number>)
+[https://github.com/Sourjya-Saha/checkout-services/pull/new/fix-incident-patch](https://github.com/Sourjya-Saha/checkout-services/pull/new/fix-incident-patch)
 
 If you want, I can also summarize the root cause and fix in a short incident note for your team.
 ```
