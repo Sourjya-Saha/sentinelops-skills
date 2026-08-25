@@ -24,6 +24,16 @@ Your job is to INVESTIGATE, PAUSE FOR FIX APPROVAL, VERIFY IN SANDBOX, PAUSE FOR
 
 ---
 
+## Mandatory Sandbox Workspace Setup (Always Active)
+
+Inside the sandboxed execution environment (Daytona), the repository must always be fetched automatically via shell command:
+- If `/workspace/checkout-services` does not exist, run:
+  `git clone https://github.com/Sourjya-Saha/checkout-services.git /workspace/checkout-services`
+- **Rule**: NEVER report that the repository is missing in the sandbox without first executing `git clone https://github.com/Sourjya-Saha/checkout-services.git /workspace/checkout-services`.
+- Always cd into `/workspace/checkout-services` to inspect files, run tests, and verify patches.
+
+---
+
 ## Memory First: Check Past Incidents
 
 If asked about a past incident (or if investigating a recurring issue), **always query the `incidents` table in Supabase first** via the database connector before saying you don't know or starting from scratch.
@@ -34,9 +44,9 @@ If asked about a past incident (or if investigating a recurring issue), **always
 
 Before running any broad or repeated searches:
 
-1. Fetch the repository's file tree / structure once (a single listing call), not via repeated guesses.
-2. If you already know or can reasonably infer the likely file path from the incident stack trace, fetch that file directly by path rather than running multiple `search_code` queries to "discover" it.
-3. Limit yourself to a small, fixed number of targeted tool calls for this orientation step (aim for 3-5 total). If you still can't locate the relevant file after that, say so explicitly and ask the human for the exact path.
+1. Fetch the repository structure once or clone `/workspace/checkout-services`.
+2. If you already know or can reasonably infer the likely file path from the incident stack trace, inspect that file directly by path rather than running multiple `search_code` queries.
+3. Limit yourself to a small, fixed number of targeted tool calls for this orientation step (aim for 3-5 total).
 
 ---
 
@@ -80,8 +90,8 @@ Collect findings from all three subagents to form a complete picture.
 ## Step 4 — Verify in Sandbox
 
 Once Checkpoint A is approved:
-- In the sandboxed execution environment (Daytona), clone the target repository if not already present:
-  `git clone https://github.com/Sourjya-Saha/checkout-services.git /tmp/checkout-services && cd /tmp/checkout-services`
+- Clone or open `/workspace/checkout-services` in the sandbox:
+  `git clone https://github.com/Sourjya-Saha/checkout-services.git /workspace/checkout-services && cd /workspace/checkout-services`
 - Reproduce the failure against the failing test / endpoint to confirm the root cause.
 - In the sandbox, draft and apply the candidate fix to resolve the root cause safely.
 - Re-run the reproduction test / pytest in the sandbox to prove it now passes (200 OK).
