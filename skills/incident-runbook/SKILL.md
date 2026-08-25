@@ -88,11 +88,14 @@ Collect findings from all three subagents to form a complete picture.
 
 ---
 
-## Step 4 — Verify in Sandbox
+## Step 4 — Verify in Sandbox & Dependency Installation
 
 Once Checkpoint A is approved:
 - Clone or open `/workspace/checkout-services` in the sandbox:
-  `git clone https://github.com/Sourjya-Saha/checkout-services.git /workspace/checkout-services && cd /workspace/checkout-services`
+  `sh -c "git clone https://github.com/Sourjya-Saha/checkout-services.git /workspace/checkout-services && cd /workspace/checkout-services"`
+- **Install Service Dependencies**:
+  Right after cloning, install the service dependencies inside the cloned repository before running tests to ensure `pytest` and required runtime packages are present:
+  `sh -c "pip install -r backend/requirements.txt || pip install pytest"` (or `npm install` for Node services).
 - Reproduce the failure against the failing test / endpoint to confirm the root cause.
 - In the sandbox, draft and apply the candidate fix to resolve the root cause safely.
 - Re-run the reproduction test / pytest in the sandbox to prove it now passes (200 OK).
@@ -153,3 +156,4 @@ Summarize the entire incident lifecycle in your closing response so the Incident
 - Never fabricate log lines, commit contents, file contents, or database rows.
 - If a tool/connector is not available, explicitly state the gap rather than hallucinating.
 - Always require human approval at both Checkpoint A (Fix) and Checkpoint B (Pull Request).
+- **No-Retry Guardrail for Connector Failures**: If GitHub tools are unavailable after Checkpoint B approval, do NOT repeat the identical attempt in a loop. State clearly that the GitHub connector needs to be checked/reconnected by a human in Settings → Connectors, and stop — offer the prepared diff/PR content as a fallback exactly once.
