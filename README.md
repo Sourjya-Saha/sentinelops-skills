@@ -17,7 +17,7 @@
 4. [Sandbox Isolation vs. GitHub MCP Boundary](#4-sandbox-isolation-vs-github-mcp-boundary)
 5. [Two-Stage Human-in-the-Loop Approval Protocol](#5-two-stage-human-in-the-loop-approval-protocol)
 6. [Visual Evidence & HUD Execution Stream](#6-visual-evidence--hud-execution-stream)
-7. [TrueForge Agent Configuration (`agent.yaml`)](#7-trueforge-agent-configuration-agentyaml)
+7. [TrueForge Agent Configuration (`agent.yaml` & `manifest.json`)](#7-trueforge-agent-configuration-agentyaml--manifestjson)
 8. [Installation & Deployment](#8-installation--deployment)
 
 ---
@@ -27,7 +27,7 @@
 ```mermaid
 flowchart TD
     subgraph TriggerLayer ["1. INCIDENT INGESTION"]
-        Alert["Production Alert / Error Spike<br/>(TypeError on Guest Checkout)"] --> Dispatcher["TrueForge Event Router"]
+        Alert["Production Alert / Error Spike<br/>(TypeError: float and dict)"] --> Dispatcher["TrueForge Event Router"]
     end
 
     subgraph SkillSelection ["2. SKILL ACTIVATION"]
@@ -51,7 +51,7 @@ flowchart TD
 
     subgraph DaytonaIsolation ["5. DAYTONA LINUX SANDBOX (ISOLATED)"]
         CheckpointA -->|Approved by Commander| Daytona["Daytona Linux MicroVM<br/>- 1. Clone working copy<br/>- 2. pip install requirements<br/>- 3. Actively Reproduce Bug in Sandbox<br/>- 4. Apply candidate patch<br/>- 5. Re-run pytest backend/tests"]
-        Daytona -->|All 8 Tests Pass| Proof["Sandbox Verification Proof (100% OK)"]
+        Daytona -->|All 9 Tests Pass| Proof["Sandbox Verification Proof (100% OK)"]
     end
 
     subgraph Gate2 ["6. CHECKPOINT B (APPROVAL GATE 2)"]
@@ -79,7 +79,7 @@ flowchart TD
 
 * **Path:** [`skills/incident-runbook/SKILL.md`](skills/incident-runbook/SKILL.md)
 * **Target Repository:** `Sourjya-Saha/checkout-services`
-* **Trigger:** Production error spikes, failed guest checkouts, 500 error alerts, or `/investigate` slash commands.
+* **Trigger:** Production error spikes, regional tax calculation exceptions, failed checkouts, or `/investigate` slash commands.
 
 ### Execution Lifecycle:
 
@@ -88,14 +88,14 @@ flowchart TD
 * Extracts the impacted code files from the exception traceback (`backend/app/payment_processor.py`).
 
 #### Step 1 — Session Opening & Incident Tagging
-* Generates a unique incident ID format (e.g. `INC-20260826-1338`).
+* Generates a unique incident ID format (e.g. `INC-20260826-checkout-500`).
 * Emits real-time SSE telemetry to the SentinelOps Command HUD.
 
 #### Step 2 — Parallel Subagent Swarm Evidence Gathering
 The commander launches three specialized subagents simultaneously:
-1. **Subagent Alpha (`GIT-SENTINEL`)**: Interrogates recent commits on `main` via GitHub MCP tools (`list_commits`, `get_commit`).
-2. **Subagent Bravo (`LOG-TRACE`)**: Parses exception tracebacks and isolates runtime stack frames.
-3. **Subagent Charlie (`DATA-CORE`)**: Queries Supabase PostgreSQL `orders` and `users` tables to correlate failed transactions (`is_guest=true`).
+1. **Subagent Alpha (`GIT-SENTINEL`)**: Interrogates recent commits on `main` via GitHub MCP tools (`list_commits`, `get_commit`) and isolates commit `416e972`.
+2. **Subagent Bravo (`LOG-TRACE`)**: Parses exception tracebacks and isolates runtime stack frame line 94 (`TypeError: unsupported operand type(s) for *: 'float' and 'dict'`).
+3. **Subagent Charlie (`DATA-CORE`)**: Queries Supabase PostgreSQL `orders` and `users` tables to correlate failed transactions (`tax_region="US_CA"`).
 
 #### Step 3 — Hypothesis Formulation & Checkpoint A
 * Synthesizes findings into a unified root-cause hypothesis.
@@ -106,9 +106,9 @@ The commander launches three specialized subagents simultaneously:
 Once Checkpoint A is approved:
 1. **Clones working copy** into `/tmp/checkout-services` inside the Daytona Linux MicroVM.
 2. **Installs dependencies**: `pip install -r backend/requirements.txt`.
-3. **Actively reproduces the bug in the sandbox**: Runs `pytest backend/tests/test_checkout.py -k guest` to verify reproduction of the `TypeError: 'NoneType' object is not subscriptable` exception in the isolated environment.
-4. **Applies candidate patch** in `payment_processor.py` to handle `NoneType` guest currency fallbacks.
-5. **Verifies fix**: Executes `pytest backend/tests` to prove all 8 unit tests pass (100% OK).
+3. **Actively reproduces the bug in the sandbox**: Runs `pytest backend/tests/test_checkout.py -k tax` to verify reproduction of the `TypeError` exception in the isolated environment.
+4. **Applies candidate patch** in `payment_processor.py` to safely extract `.get("rate")` if the rate mapping is a structured dictionary.
+5. **Verifies fix**: Executes `pytest backend/tests` to prove all 9 unit tests pass (100% OK).
 
 #### Step 5 — Checkpoint B (PR Gate)
 * **PAUSES EXECUTION for Checkpoint B**:
@@ -116,7 +116,7 @@ Once Checkpoint A is approved:
 
 #### Step 6 — Act and Open GitHub Pull Request
 Once Checkpoint B is approved:
-* Directly invokes GitHub MCP `push_files` to branch `fix-guest-checkout-typeerror`.
+* Directly invokes GitHub MCP `push_files` to branch `fix-regional-tax-rate-dict`.
 * Invokes GitHub MCP `create_pull_request` referencing root cause, Daytona sandbox reproduction & fix proof, and verification logs.
 
 #### Step 7 — Structured Postmortem Commitment
@@ -181,7 +181,7 @@ SentinelOps enforces a **strict physical separation** between sandbox compute an
                                              1. pip install deps
                                              2. Actively reproduce bug
                                              3. Apply candidate fix
-                                             4. Run pytest suite (8/8 pass)
+                                             4. Run pytest suite (9/9 pass)
                                                        │
                                                        ▼
         ╔══════════════════════════════════════════════════════════╗
@@ -220,19 +220,35 @@ SentinelOps enforces a **strict physical separation** between sandbox compute an
 
 ---
 
-### 4. Supabase Persistent Memory Ledger
+### 4. Interactive Human-in-the-Loop Approval in TrueForge
+![Human-in-the-Loop Approval](docs/HITL.png)
+
+---
+
+### 5. Automated Pull Request Creation via GitHub MCP
+![Pull Request Creation](docs/pr_req1.png)
+
+---
+
+### 6. Qodo AI Automated Code Review & Analysis
+![Qodo AI Code Review](docs/pr_req2.png)
+
+---
+
+### 7. Supabase Persistent Memory Ledger
 ![Postmortem Incident Ledger](docs/sentinleops_incident.png)
 
 ---
 
-### 5. TrueForge Agent Harness & Daytona MicroVM Instances
+### 8. TrueForge Agent Harness & Daytona MicroVM Instances
 ![TrueForge Runtime Interface](docs/trueforge_1.png)
 ![TrueForge Sandbox Compute](docs/trueforge_2.png)
 
 ---
 
-## 7. TrueForge Agent Configuration (`agent.yaml`)
+## 7. TrueForge Agent Configuration (`agent.yaml` & `manifest.json`)
 
+### `agent.yaml`
 ```yaml
 name: sentinelops
 display_name: SentinelOps Autonomous Incident Commander
@@ -244,9 +260,24 @@ system_prompt: |
   You strictly execute the SOP defined in incident-runbook and rollback-playbook.
   Never bypass Checkpoint A or Checkpoint B.
 
+runtime:
+  type: trueforge
+  sandbox:
+    provider: daytona
+    image: python:3.11-slim
+    shell: /bin/sh
+    default_shell: sh
+    working_directory: /tmp
+    timeout_seconds: 300
+    env:
+      PATH: "/usr/local/bin:/usr/bin:/bin"
+      PYTHONUNBUFFERED: "1"
+
 skills:
-  - path: ./skills/incident-runbook
-  - path: ./skills/rollback-playbook
+  - name: incident-runbook
+    path: ./skills/incident-runbook/SKILL.md
+  - name: rollback-playbook
+    path: ./skills/rollback-playbook/SKILL.md
 
 mcp_servers:
   - name: github
@@ -262,11 +293,63 @@ mcp_servers:
     args: ["-y", "@modelcontextprotocol/server-postgres"]
     env:
       POSTGRES_CONNECTION_STRING: "${DATABASE_URL}"
+```
 
-sandbox:
-  provider: daytona
-  image: ubuntu:22.04
-  timeout_seconds: 300
+### `manifest.json`
+```json
+{
+  "name": "sentinelops",
+  "version": "1.0.0",
+  "display_name": "SentinelOps Autonomous Incident Commander",
+  "description": "Autonomous SRE agent that investigates, sandboxes, verifies, and remediates production microservice outages with Two-Stage HITL approval gates and persistent postmortem memory.",
+  "runtime": {
+    "type": "trueforge",
+    "model": "gpt-4o",
+    "system_prompt": "You are SentinelOps, the Autonomous Incident Commander for production microservices. You strictly follow the SOP defined in incident-runbook and rollback-playbook. Always enforce Checkpoint A and Checkpoint B approval gates.",
+    "sandbox": {
+      "provider": "daytona",
+      "image": "python:3.11-slim",
+      "shell": "/bin/sh",
+      "default_shell": "sh",
+      "working_directory": "/tmp",
+      "timeout_seconds": 300,
+      "env": {
+        "PATH": "/usr/local/bin:/usr/bin:/bin",
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  },
+  "skills": [
+    {
+      "name": "incident-runbook",
+      "path": "./skills/incident-runbook/SKILL.md"
+    },
+    {
+      "name": "rollback-playbook",
+      "path": "./skills/rollback-playbook/SKILL.md"
+    }
+  ],
+  "mcp_servers": [
+    {
+      "name": "github",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+    {
+      "name": "postgres",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "${DATABASE_URL}"
+      }
+    }
+  ]
+}
 ```
 
 ---
