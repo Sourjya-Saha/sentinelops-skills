@@ -1,4 +1,4 @@
-# 🧠 SentinelOps Agent Skills: Autonomous Runbooks & Playbooks
+# SentinelOps Agent Skills: Autonomous Runbooks & Playbooks
 
 [![TrueForge](https://img.shields.io/badge/TrueForge-Agent_Skills-DC2626)](https://truefoundry.com/)
 [![Daytona](https://img.shields.io/badge/Daytona-Isolated_Sandbox-000000?logo=linux)](https://daytona.io/)
@@ -11,7 +11,7 @@
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 1. [Agent Skills Architecture](#1-agent-skills-architecture)
 2. [Skill 1: Incident Runbook (`incident-runbook`)](#2-skill-1-incident-runbook-incident-runbook)
 3. [Skill 2: Rollback Playbook (`rollback-playbook`)](#3-skill-2-rollback-playbook-rollback-playbook)
@@ -28,41 +28,41 @@
 ```mermaid
 flowchart TD
     subgraph TriggerLayer ["1. INCIDENT INGESTION"]
-        Alert["🚨 Production Alert / Error Spike<br/>(TypeError on Guest Checkout)"] --> Dispatcher["📡 TrueForge Event Router"]
+        Alert["Production Alert / Error Spike<br/>(TypeError on Guest Checkout)"] --> Dispatcher["TrueForge Event Router"]
     end
 
     subgraph SkillSelection ["2. SKILL ACTIVATION"]
-        Dispatcher -->|Matches SRE Intent| Runbook["📘 incident-runbook (SKILL.md)"]
-        Dispatcher -->|Matches Rollback Intent| Playbook["📕 rollback-playbook (SKILL.md)"]
+        Dispatcher -->|Matches SRE Intent| Runbook["incident-runbook (SKILL.md)"]
+        Dispatcher -->|Matches Rollback Intent| Playbook["rollback-playbook (SKILL.md)"]
     end
 
     subgraph SwarmExecution ["3. PARALLEL SUBAGENT SWARM"]
-        Runbook -->|Step 2: Launch in Parallel| SubAlpha["🔍 Subagent Alpha<br/>(Git Commits & Branch Diffs)"]
-        Runbook -->|Step 2: Launch in Parallel| SubBravo["📜 Subagent Bravo<br/>(Exception Logs & Tracebacks)"]
-        Runbook -->|Step 2: Launch in Parallel| SubCharlie["🗄️ Subagent Charlie<br/>(Supabase DB Orders Correlation)"]
+        Runbook -->|Step 2: Launch in Parallel| SubAlpha["Subagent Alpha<br/>(Git Commits & Branch Diffs)"]
+        Runbook -->|Step 2: Launch in Parallel| SubBravo["Subagent Bravo<br/>(Exception Logs & Tracebacks)"]
+        Runbook -->|Step 2: Launch in Parallel| SubCharlie["Subagent Charlie<br/>(Supabase DB Orders Correlation)"]
         
-        SubAlpha --> Hypothesis["🎯 Single Root-Cause Hypothesis"]
+        SubAlpha --> Hypothesis["Single Root-Cause Hypothesis"]
         SubBravo --> Hypothesis
         SubCharlie --> Hypothesis
     end
 
     subgraph Gate1 ["4. CHECKPOINT A (APPROVAL GATE 1)"]
-        Hypothesis --> CheckpointA{"🛑 CHECKPOINT A<br/>Human Approval to Draft & Test Fix"}
+        Hypothesis --> CheckpointA{"CHECKPOINT A<br/>Human Approval to Draft & Test Fix"}
     end
 
     subgraph DaytonaIsolation ["5. DAYTONA LINUX SANDBOX (ISOLATED)"]
-        CheckpointA -->|Approved by Commander| Daytona["📦 Daytona Linux MicroVM<br/>- Clone repo<br/>- pip install requirements<br/>- Apply patch<br/>- Run pytest backend/tests"]
-        Daytona -->|All 8 Tests Pass| Proof["✅ Sandbox Verification Proof"]
+        CheckpointA -->|Approved by Commander| Daytona["Daytona Linux MicroVM<br/>- Clone repo<br/>- pip install requirements<br/>- Apply patch<br/>- Run pytest backend/tests"]
+        Daytona -->|All 8 Tests Pass| Proof["Sandbox Verification Proof"]
     end
 
     subgraph Gate2 ["6. CHECKPOINT B (APPROVAL GATE 2)"]
-        Proof --> CheckpointB{"🛑 CHECKPOINT B<br/>Human Approval to Open GitHub PR"}
+        Proof --> CheckpointB{"CHECKPOINT B<br/>Human Approval to Open GitHub PR"}
     end
 
     subgraph GitHubAndQodo ["7. GITHUB MCP & PERSISTENT MEMORY"]
-        CheckpointB -->|Approved by Commander| GitHubMCP["🐙 TrueForge GitHub MCP Connector<br/>push_files + create_pull_request"]
-        GitHubMCP --> QodoReview["🤖 Qodo AI Automated PR Review"]
-        QodoReview --> SupabaseMemory[("🐘 Supabase PostgreSQL DB<br/>Table: incidents")]
+        CheckpointB -->|Approved by Commander| GitHubMCP["TrueForge GitHub MCP Connector<br/>push_files + create_pull_request"]
+        GitHubMCP --> QodoReview["Qodo AI Automated PR Review"]
+        QodoReview --> SupabaseMemory[("Supabase PostgreSQL DB<br/>Table: incidents")]
     end
 
     classDef redGate fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#991b1b;
@@ -204,22 +204,22 @@ SentinelOps enforces a **strict physical separation** between sandbox compute an
 
 ## 6. Visual Evidence & HUD Execution Stream
 
-### 🚀 1. Autonomous SRE Command Center Telemetry
+### 1. Autonomous SRE Command Center Telemetry
 ![SentinelOps Telemetry HUD](docs/sentinleops_hub.png)
 
 ---
 
-### 🛑 2. Live Approval Gates & Daytona Terminal Stream
+### 2. Live Approval Gates & Daytona Terminal Stream
 ![Two-Stage Approval Gates](docs/sentinleops_hub_2.png)
 
 ---
 
-### 🐘 3. Supabase Persistent Memory Ledger
+### 3. Supabase Persistent Memory Ledger
 ![Postmortem Incident Ledger](docs/sentinleops_incident.png)
 
 ---
 
-### ⚙️ 4. TrueForge Agent Harness & Daytona MicroVM Instances
+### 4. TrueForge Agent Harness & Daytona MicroVM Instances
 ![TrueForge Runtime Interface](docs/trueforge_1.png)
 ![TrueForge Sandbox Compute](docs/trueforge_2.png)
 
@@ -282,5 +282,5 @@ trueforge agent deploy --config agent.yaml
 
 ---
 
-## 📄 License
+## License
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
