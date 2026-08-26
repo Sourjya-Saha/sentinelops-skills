@@ -16,9 +16,10 @@
 3. [Skill 2: Rollback Playbook (`rollback-playbook`)](#3-skill-2-rollback-playbook-rollback-playbook)
 4. [Sandbox Isolation vs. GitHub MCP Boundary](#4-sandbox-isolation-vs-github-mcp-boundary)
 5. [Two-Stage Human-in-the-Loop Approval Protocol](#5-two-stage-human-in-the-loop-approval-protocol)
-6. [Visual Evidence & HUD Execution Stream](#6-visual-evidence--hud-execution-stream)
-7. [TrueForge Agent Configuration (`agent.yaml` & `manifest.json`)](#7-trueforge-agent-configuration-agentyaml--manifestjson)
-8. [Installation & Deployment](#8-installation--deployment)
+6. [Four Production Incidents Resolved by SentinelOps](#6-four-production-incidents-resolved-by-sentinelops)
+7. [Visual Evidence & HUD Execution Stream](#7-visual-evidence--hud-execution-stream)
+8. [TrueForge Agent Configuration (`agent.yaml` & `manifest.json`)](#8-trueforge-agent-configuration-agentyaml--manifestjson)
+9. [Installation & Deployment](#9-installation--deployment)
 
 ---
 
@@ -27,7 +28,7 @@
 ```mermaid
 flowchart TD
     subgraph TriggerLayer ["1. INCIDENT INGESTION"]
-        Alert["Production Alert / Error Spike<br/>(TypeError: float and dict)"] --> Dispatcher["TrueForge Event Router"]
+        Alert["Production Alert / Error Spike<br/>(TypeError / KeyError / 500)"] --> Dispatcher["TrueForge Event Router"]
     end
 
     subgraph SkillSelection ["2. SKILL ACTIVATION"]
@@ -93,9 +94,9 @@ flowchart TD
 
 #### Step 2 — Parallel Subagent Swarm Evidence Gathering
 The commander launches three specialized subagents simultaneously:
-1. **Subagent Alpha (`GIT-SENTINEL`)**: Interrogates recent commits on `main` via GitHub MCP tools (`list_commits`, `get_commit`) and isolates commit `416e972`.
-2. **Subagent Bravo (`LOG-TRACE`)**: Parses exception tracebacks and isolates runtime stack frame line 94 (`TypeError: unsupported operand type(s) for *: 'float' and 'dict'`).
-3. **Subagent Charlie (`DATA-CORE`)**: Queries Supabase PostgreSQL `orders` and `users` tables to correlate failed transactions (`tax_region="US_CA"`).
+1. **Subagent Alpha (`GIT-SENTINEL`)**: Interrogates recent commits on `main` via GitHub MCP tools (`list_commits`, `get_commit`).
+2. **Subagent Bravo (`LOG-TRACE`)**: Parses exception tracebacks and isolates runtime stack frames.
+3. **Subagent Charlie (`DATA-CORE`)**: Queries Supabase PostgreSQL `orders` and `users` tables to correlate failed transactions.
 
 #### Step 3 — Hypothesis Formulation & Checkpoint A
 * Synthesizes findings into a unified root-cause hypothesis.
@@ -106,9 +107,9 @@ The commander launches three specialized subagents simultaneously:
 Once Checkpoint A is approved:
 1. **Clones working copy** into `/tmp/checkout-services` inside the Daytona Linux MicroVM.
 2. **Installs dependencies**: `pip install -r backend/requirements.txt`.
-3. **Actively reproduces the bug in the sandbox**: Runs `pytest backend/tests/test_checkout.py -k tax` to verify reproduction of the `TypeError` exception in the isolated environment.
-4. **Applies candidate patch** in `payment_processor.py` to safely extract `.get("rate")` if the rate mapping is a structured dictionary.
-5. **Verifies fix**: Executes `pytest backend/tests` to prove all 9 unit tests pass (100% OK).
+3. **Actively reproduces the bug in the sandbox**: Runs `pytest backend/tests/test_checkout.py` to verify reproduction of the exception in the isolated environment.
+4. **Applies candidate patch** in `payment_processor.py`.
+5. **Verifies fix**: Executes `pytest backend/tests` to prove all unit tests pass (100% OK).
 
 #### Step 5 — Checkpoint B (PR Gate)
 * **PAUSES EXECUTION for Checkpoint B**:
@@ -116,7 +117,7 @@ Once Checkpoint A is approved:
 
 #### Step 6 — Act and Open GitHub Pull Request
 Once Checkpoint B is approved:
-* Directly invokes GitHub MCP `push_files` to branch `fix-regional-tax-rate-dict`.
+* Directly invokes GitHub MCP `push_files` to target branch.
 * Invokes GitHub MCP `create_pull_request` referencing root cause, Daytona sandbox reproduction & fix proof, and verification logs.
 
 #### Step 7 — Structured Postmortem Commitment
@@ -203,7 +204,24 @@ SentinelOps enforces a **strict physical separation** between sandbox compute an
 
 ---
 
-## 6. Visual Evidence & HUD Execution Stream
+## 6. Four Production Incidents Resolved by SentinelOps
+
+1. **Regional Tax Jurisdiction Dictionary Mismatch (`INC-20260826-checkout-500`)**:
+   - `TypeError: unsupported operand type(s) for *: 'float' and 'dict'` when multiplying subtotal by metadata dictionary.
+   - Resolved by safely extracting `.get("rate", 0.0)` in `calculate_regional_tax()`.
+2. **Guest Checkout Currency Null-Check (`INC-20260826-guest-500`)**:
+   - `TypeError: 'NoneType' object is not subscriptable` when guest has no database user profile.
+   - Resolved by adding `_resolve_currency_symbol()` fallback to `DEFAULT_CURRENCY_CONFIG`.
+3. **Logistics Shipping Tier KeyError (`INC-20260826-shipping-keyerror`)**:
+   - `KeyError: 'DEFAULT'` from direct dictionary bracket indexing.
+   - Resolved by replacing bracket subscript with safe `.get(shipping_tier.upper(), 0.0)` fallback.
+4. **Carbon Offset Initiative Missing Attribute (`INC-20260826-carbon-offset`)**:
+   - Index exception when voluntary sustainability tier was unmapped.
+   - Resolved by adding `CARBON_OFFSET_RATES.get(offset_initiative.upper(), 0.0)`.
+
+---
+
+## 7. Visual Evidence & HUD Execution Stream
 
 ### 1. SentinelOps Interactive Landing Experience
 ![SentinelOps Landing Experience](docs/landingpage.png)
@@ -221,7 +239,7 @@ SentinelOps enforces a **strict physical separation** between sandbox compute an
 ---
 
 ### 4. Interactive Human-in-the-Loop Approval in TrueForge
-![Human-in-the-Loop Approval](docs/HITL.png)
+![Human-in-the-Loop Approval](docs/HITL_2.png)
 
 ---
 
@@ -246,7 +264,7 @@ SentinelOps enforces a **strict physical separation** between sandbox compute an
 
 ---
 
-## 7. TrueForge Agent Configuration (`agent.yaml` & `manifest.json`)
+## 8. TrueForge Agent Configuration (`agent.yaml` & `manifest.json`)
 
 ### `agent.yaml`
 ```yaml
@@ -354,7 +372,7 @@ mcp_servers:
 
 ---
 
-## 8. Installation & Deployment
+## 9. Installation & Deployment
 
 ### Adding Skills to TrueForge Runtime
 ```bash
