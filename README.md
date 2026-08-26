@@ -16,7 +16,7 @@
 3. [Skill 2: Rollback Playbook (`rollback-playbook`)](#3-skill-2-rollback-playbook-rollback-playbook)
 4. [Sandbox Isolation vs. GitHub MCP Boundary](#4-sandbox-isolation-vs-github-mcp-boundary)
 5. [Two-Stage Human-in-the-Loop Approval Protocol](#5-two-stage-human-in-the-loop-approval-protocol)
-6. [Four Production Incidents Resolved by SentinelOps](#6-four-production-incidents-resolved-by-sentinelops)
+6. [Autonomous Incident Response Ledger](#6-autonomous-incident-response-ledger)
 7. [Visual Evidence & HUD Execution Stream](#7-visual-evidence--hud-execution-stream)
 8. [TrueForge Agent Configuration (`agent.yaml` & `manifest.json`)](#8-trueforge-agent-configuration-agentyaml--manifestjson)
 9. [Installation & Deployment](#9-installation--deployment)
@@ -89,7 +89,7 @@ flowchart TD
 * Extracts the impacted code files from the exception traceback (`backend/app/payment_processor.py`).
 
 #### Step 1 — Session Opening & Incident Tagging
-* Generates a unique incident ID format (e.g. `INC-20260826-checkout-500`).
+* Generates a unique incident ID format (e.g. `INC-20260826-9448`).
 * Emits real-time SSE telemetry to the SentinelOps Command HUD.
 
 #### Step 2 — Parallel Subagent Swarm Evidence Gathering
@@ -204,20 +204,16 @@ SentinelOps enforces a **strict physical separation** between sandbox compute an
 
 ---
 
-## 6. Four Production Incidents Resolved by SentinelOps
+## 6. Autonomous Incident Response Ledger
 
-1. **Regional Tax Jurisdiction Dictionary Mismatch (`INC-20260826-checkout-500`)**:
-   - `TypeError: unsupported operand type(s) for *: 'float' and 'dict'` when multiplying subtotal by metadata dictionary.
-   - Resolved by safely extracting `.get("rate", 0.0)` in `calculate_regional_tax()`.
-2. **Guest Checkout Currency Null-Check (`INC-20260826-guest-500`)**:
-   - `TypeError: 'NoneType' object is not subscriptable` when guest has no database user profile.
-   - Resolved by adding `_resolve_currency_symbol()` fallback to `DEFAULT_CURRENCY_CONFIG`.
-3. **Logistics Shipping Tier KeyError (`INC-20260826-shipping-keyerror`)**:
-   - `KeyError: 'DEFAULT'` from direct dictionary bracket indexing.
-   - Resolved by replacing bracket subscript with safe `.get(shipping_tier.upper(), 0.0)` fallback.
-4. **Carbon Offset Initiative Missing Attribute (`INC-20260826-carbon-offset`)**:
-   - Index exception when voluntary sustainability tier was unmapped.
-   - Resolved by adding `CARBON_OFFSET_RATES.get(offset_initiative.upper(), 0.0)`.
+| Supabase Incident ID | Exception & Failure Mode | Daytona Sandbox Proof | Human Approval | Target GitHub PR | Qodo AI Review | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **`INC-20260826-9448`** | `TypeError: unsupported operand type(s) for *: 'float' and 'dict'` | 100% test suites passed (9/9 OK) | Checkpoint A & B Approved | [PR #12](https://github.com/Sourjya-Saha/checkout-services/pull/12) | **APPROVED (0 HIGHS)** | **RESOLVED [OK]** |
+| **`INC-20260826-1338`** | `TypeError: 'NoneType' object is not subscriptable` | 100% test suites passed (8/8 OK) | Checkpoint A & B Approved | [PR #11](https://github.com/Sourjya-Saha/checkout-services/pull/11) | **APPROVED (0 HIGHS)** | **RESOLVED [OK]** |
+| **`INC-20260826-3780`** | `KeyError: 'STANDARD'` in `calculate_carbon_offset` | 100% test suites passed (8/8 OK) | Checkpoint A & B Approved | [PR #10](https://github.com/Sourjya-Saha/checkout-services/pull/10) | **APPROVED (0 HIGHS)** | **RESOLVED [OK]** |
+| **`INC-20260826-8855`** | `KeyError: 'STANDARD'` in `calculate_packaging_fee` | 100% test suites passed (8/8 OK) | Checkpoint A & B Approved | [PR #9](https://github.com/Sourjya-Saha/checkout-services/pull/9) | **APPROVED (0 HIGHS)** | **RESOLVED [OK]** |
+| **`INC-20260826-checkout`** | `500 KeyError in payment_processor.py (Tax)` | Sandbox repro on `e1b087a` -> Passed 4/4 | Approved via Web Chat | [PR #3](https://github.com/Sourjya-Saha/checkout-services/pull/3) | **APPROVED (0 HIGHS)** | **RESOLVED [OK]** |
+| **`INC-20260825-621`** | `500 Error in payment_processor.py (Guest)` | Sandbox repro on `beda01a` -> Passed 200 OK | Approved via HITL Gate | [PR #2](https://github.com/Sourjya-Saha/checkout-services/pull/2) | **APPROVED (0 HIGHS)** | **RESOLVED [OK]** |
 
 ---
 
