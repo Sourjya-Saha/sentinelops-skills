@@ -68,15 +68,24 @@ inside the sandbox shell.
 
 ---
 
-## Step 4 — Draft & Verify Fix in Sandbox
+## Step 4 — Reproduce Failure & Verify Fix in Sandbox
 
 Once Checkpoint A is approved:
-- In the sandbox, clone a local working copy for verification only:
-  `sh -c "git clone https://github.com/Sourjya-Saha/checkout-services.git /tmp/checkout-services && cd /tmp/checkout-services"`
-- Install dependencies before running tests: `sh -c "pip install -r backend/requirements.txt"`
-- Dynamically determine and apply the safe fix for the root cause, entirely within this local sandbox copy.
-- Run Python verification / pytest to prove it passes (200 OK): `sh -c "pytest backend/tests"`
-- Once verified, capture the final file contents to be committed via the GitHub MCP connector in Step 6.
+1. **Clone Working Copy in Sandbox**:
+   `sh -c "git clone https://github.com/Sourjya-Saha/checkout-services.git /tmp/checkout-services && cd /tmp/checkout-services"`
+2. **Install Dependencies**:
+   `sh -c "pip install -r backend/requirements.txt"`
+3. **Reproduce the Bug in Sandbox**:
+   - Run the test suite or reproduction command against the unpatched codebase to actively observe the failure:
+     `sh -c "pytest backend/tests/test_checkout.py -k guest"`
+   - Confirm the failure matches the production exception (`TypeError: 'NoneType' object is not subscriptable`).
+4. **Apply Candidate Fix in Sandbox**:
+   - Dynamically determine and apply the safe fix for the root cause, entirely within this local sandbox copy.
+5. **Verify Fix Passes (100% OK)**:
+   - Run the full test suite to prove regression resolution without side-effects:
+     `sh -c "pytest backend/tests"`
+   - Confirm all 8 tests pass cleanly.
+6. Once verified, capture the final file contents to be committed via the GitHub MCP connector in Step 6.
 
 ---
 

@@ -5,7 +5,6 @@
 [![GitHub MCP](https://img.shields.io/badge/MCP-GitHub_Connector-181717?logo=github)](https://modelcontextprotocol.io/)
 [![Supabase MCP](https://img.shields.io/badge/MCP-Supabase_PostgreSQL-3ECF8E?logo=supabase)](https://supabase.com/)
 [![Qodo AI](https://img.shields.io/badge/Qodo_AI-PR_Review_Verified-10B981)](https://qodo.ai/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 > This repository contains the **TrueForge Agent Skills** and standard operating procedures (SOPs) for **SentinelOps**, an autonomous SRE incident response agent designed for enterprise production microservice ecosystems.
 
@@ -47,12 +46,12 @@ flowchart TD
     end
 
     subgraph Gate1 ["4. CHECKPOINT A (APPROVAL GATE 1)"]
-        Hypothesis --> CheckpointA{"CHECKPOINT A<br/>Human Approval to Draft & Test Fix"}
+        Hypothesis --> CheckpointA{"CHECKPOINT A<br/>Human Approval to Reproduce & Fix"}
     end
 
     subgraph DaytonaIsolation ["5. DAYTONA LINUX SANDBOX (ISOLATED)"]
-        CheckpointA -->|Approved by Commander| Daytona["Daytona Linux MicroVM<br/>- Clone repo<br/>- pip install requirements<br/>- Apply patch<br/>- Run pytest backend/tests"]
-        Daytona -->|All 8 Tests Pass| Proof["Sandbox Verification Proof"]
+        CheckpointA -->|Approved by Commander| Daytona["Daytona Linux MicroVM<br/>- 1. Clone working copy<br/>- 2. pip install requirements<br/>- 3. Actively Reproduce Bug in Sandbox<br/>- 4. Apply candidate patch<br/>- 5. Re-run pytest backend/tests"]
+        Daytona -->|All 8 Tests Pass| Proof["Sandbox Verification Proof (100% OK)"]
     end
 
     subgraph Gate2 ["6. CHECKPOINT B (APPROVAL GATE 2)"]
@@ -103,12 +102,13 @@ The commander launches three specialized subagents simultaneously:
 * **PAUSES EXECUTION for Checkpoint A**:
   > *"Requesting approval to: draft and test a fix in the sandbox."*
 
-#### Step 4 — Daytona Sandbox Draft & Verification
+#### Step 4 — Sandbox Reproduction, Fix & Verification
 Once Checkpoint A is approved:
-1. Clones a clean copy into `/tmp/checkout-services` inside the Daytona Linux MicroVM.
-2. Installs requirements: `pip install -r backend/requirements.txt`.
-3. Applies the safe candidate fix in `payment_processor.py`.
-4. Executes unit tests: `pytest backend/tests` (proves 8/8 tests pass).
+1. **Clones working copy** into `/tmp/checkout-services` inside the Daytona Linux MicroVM.
+2. **Installs dependencies**: `pip install -r backend/requirements.txt`.
+3. **Actively reproduces the bug in the sandbox**: Runs `pytest backend/tests/test_checkout.py -k guest` to verify reproduction of the `TypeError: 'NoneType' object is not subscriptable` exception in the isolated environment.
+4. **Applies candidate patch** in `payment_processor.py` to handle `NoneType` guest currency fallbacks.
+5. **Verifies fix**: Executes `pytest backend/tests` to prove all 8 unit tests pass (100% OK).
 
 #### Step 5 — Checkpoint B (PR Gate)
 * **PAUSES EXECUTION for Checkpoint B**:
@@ -117,7 +117,7 @@ Once Checkpoint A is approved:
 #### Step 6 — Act and Open GitHub Pull Request
 Once Checkpoint B is approved:
 * Directly invokes GitHub MCP `push_files` to branch `fix-guest-checkout-typeerror`.
-* Invokes GitHub MCP `create_pull_request` referencing root cause, Daytona proof, and verification logs.
+* Invokes GitHub MCP `create_pull_request` referencing root cause, Daytona sandbox reproduction & fix proof, and verification logs.
 
 #### Step 7 — Structured Postmortem Commitment
 * Commits a standardized JSON postmortem record into the Supabase PostgreSQL `incidents` table.
@@ -149,7 +149,7 @@ SentinelOps enforces a **strict physical separation** between sandbox compute an
 ├───────────────────────────────────┼────────────────────────────────────┤
 │ • Local working copy (/tmp)       │ • GitHub API Token Injection       │
 │ • NO GitHub credentials injected  │ • Inspects commits & branch diffs  │
-│ • Local Pytest & unit test runner │ • Pushes candidate file diffs      │
+│ • Actively reproduces bug & tests │ • Pushes candidate file diffs      │
 │ • Zero outbound push permissions  │ • Opens official Pull Requests     │
 └───────────────────────────────────┴────────────────────────────────────┘
 ```
@@ -170,7 +170,7 @@ SentinelOps enforces a **strict physical separation** between sandbox compute an
                          │
                          ▼
         ╔══════════════════════════════════════════════════════════╗
-        ║  CHECKPOINT A // APPROVAL TO DRAFT & TEST FIX IN SANDBOX ║
+        ║  CHECKPOINT A // APPROVAL TO REPRODUCE & FIX IN SANDBOX  ║
         ║  (Presents: [TARGET REPO], [TARGET ERROR], [ACTION])     ║
         ╚══════════════════════════════════════════════════════════╝
                          │
@@ -178,9 +178,10 @@ SentinelOps enforces a **strict physical separation** between sandbox compute an
                          │ [DENY]                      │ [APPROVE]
                          ▼                             ▼
                   [Abort Runbook]            [Daytona Linux Sandbox]
-                                             - pip install deps
-                                             - Apply candidate fix
-                                             - Run pytest suite
+                                             1. pip install deps
+                                             2. Actively reproduce bug
+                                             3. Apply candidate fix
+                                             4. Run pytest suite (8/8 pass)
                                                        │
                                                        ▼
         ╔══════════════════════════════════════════════════════════╗
@@ -204,22 +205,27 @@ SentinelOps enforces a **strict physical separation** between sandbox compute an
 
 ## 6. Visual Evidence & HUD Execution Stream
 
-### 1. Autonomous SRE Command Center Telemetry
+### 1. SentinelOps Interactive Landing Experience
+![SentinelOps Landing Experience](docs/landingpage.png)
+
+---
+
+### 2. Autonomous SRE Command Center Telemetry
 ![SentinelOps Telemetry HUD](docs/sentinleops_hub.png)
 
 ---
 
-### 2. Live Approval Gates & Daytona Terminal Stream
+### 3. Live Approval Gates & Daytona Terminal Stream
 ![Two-Stage Approval Gates](docs/sentinleops_hub_2.png)
 
 ---
 
-### 3. Supabase Persistent Memory Ledger
+### 4. Supabase Persistent Memory Ledger
 ![Postmortem Incident Ledger](docs/sentinleops_incident.png)
 
 ---
 
-### 4. TrueForge Agent Harness & Daytona MicroVM Instances
+### 5. TrueForge Agent Harness & Daytona MicroVM Instances
 ![TrueForge Runtime Interface](docs/trueforge_1.png)
 ![TrueForge Sandbox Compute](docs/trueforge_2.png)
 
@@ -279,8 +285,3 @@ trueforge skills validate ./skills/rollback-playbook
 # Deploy agent with skills loaded
 trueforge agent deploy --config agent.yaml
 ```
-
----
-
-## License
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
