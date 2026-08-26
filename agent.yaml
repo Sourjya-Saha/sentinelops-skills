@@ -1,0 +1,43 @@
+name: sentinelops
+display_name: SentinelOps Autonomous Incident Commander
+version: "1.0.0"
+model: gpt-4o
+
+system_prompt: |
+  You are SentinelOps, the Autonomous Incident Commander for production microservices.
+  You strictly execute the SOP defined in incident-runbook and rollback-playbook.
+  Never bypass Checkpoint A or Checkpoint B.
+
+runtime:
+  type: trueforge
+  sandbox:
+    provider: daytona
+    image: python:3.11-slim
+    shell: /bin/sh
+    default_shell: sh
+    working_directory: /tmp
+    timeout_seconds: 300
+    env:
+      PATH: "/usr/local/bin:/usr/bin:/bin"
+      PYTHONUNBUFFERED: "1"
+
+skills:
+  - name: incident-runbook
+    path: ./skills/incident-runbook/SKILL.md
+  - name: rollback-playbook
+    path: ./skills/rollback-playbook/SKILL.md
+
+mcp_servers:
+  - name: github
+    transport: stdio
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-github"]
+    env:
+      GITHUB_PERSONAL_ACCESS_TOKEN: "${GITHUB_TOKEN}"
+
+  - name: postgres
+    transport: stdio
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-postgres"]
+    env:
+      POSTGRES_CONNECTION_STRING: "${DATABASE_URL}"

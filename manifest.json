@@ -1,0 +1,55 @@
+{
+  "name": "sentinelops",
+  "version": "1.0.0",
+  "display_name": "SentinelOps Autonomous Incident Commander",
+  "description": "Autonomous SRE agent that investigates, sandboxes, verifies, and remediates production microservice outages with Two-Stage HITL approval gates and persistent postmortem memory.",
+  "runtime": {
+    "type": "trueforge",
+    "model": "gpt-4o",
+    "system_prompt": "You are SentinelOps, the Autonomous Incident Commander for production microservices. You strictly follow the SOP defined in incident-runbook and rollback-playbook. Always enforce Checkpoint A and Checkpoint B approval gates.",
+    "sandbox": {
+      "provider": "daytona",
+      "image": "python:3.11-slim",
+      "shell": "/bin/sh",
+      "default_shell": "sh",
+      "working_directory": "/tmp",
+      "timeout_seconds": 300,
+      "env": {
+        "PATH": "/usr/local/bin:/usr/bin:/bin",
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  },
+  "skills": [
+    {
+      "name": "incident-runbook",
+      "path": "./skills/incident-runbook/SKILL.md",
+      "description": "Standard operating procedure for investigating, sandboxing, reproducing, and fixing production outages with Two-Stage HITL gates."
+    },
+    {
+      "name": "rollback-playbook",
+      "path": "./skills/rollback-playbook/SKILL.md",
+      "description": "Emergency rollback procedure for critical regressions and canary deployment failures."
+    }
+  ],
+  "mcp_servers": [
+    {
+      "name": "github",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+    {
+      "name": "postgres",
+      "transport": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres"],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "${DATABASE_URL}"
+      }
+    }
+  ]
+}
