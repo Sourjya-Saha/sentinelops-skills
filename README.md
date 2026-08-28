@@ -1,5 +1,7 @@
 # SentinelOps Agent Skills: Autonomous Runbooks & Playbooks
 
+[![Skills Repo](https://img.shields.io/badge/GitHub-sentinelops--skills-181717?logo=github)](https://github.com/Sourjya-Saha/sentinelops-skills)
+[![Checkout Service Repo](https://img.shields.io/badge/GitHub-checkout--services-181717?logo=github)](https://github.com/Sourjya-Saha/checkout-services)
 [![TrueForge](https://img.shields.io/badge/TrueForge-Agent_Skills-DC2626)](https://truefoundry.com/)
 [![Daytona](https://img.shields.io/badge/Daytona-Isolated_Sandbox-000000?logo=linux)](https://daytona.io/)
 [![GitHub MCP](https://img.shields.io/badge/MCP-GitHub_Connector-181717?logo=github)](https://modelcontextprotocol.io/)
@@ -7,6 +9,15 @@
 [![Qodo AI](https://img.shields.io/badge/Qodo_AI-PR_Review_Verified-10B981)](https://qodo.ai/)
 
 > This repository contains the **TrueForge Agent Skills** and standard operating procedures (SOPs) for **SentinelOps**, an autonomous SRE incident response agent designed for enterprise production microservice ecosystems.
+
+---
+
+## 🔗 Official Monorepo Repositories
+
+| Repository | GitHub URL | Description |
+| :--- | :--- | :--- |
+| **`sentinelops-skills`** | [**https://github.com/Sourjya-Saha/sentinelops-skills**](https://github.com/Sourjya-Saha/sentinelops-skills) | TrueForge Agent Skills runtime (`agent.yaml`, `manifest.json`, incident runbooks, and rollback playbooks). |
+| **`checkout-service`** | [**https://github.com/Sourjya-Saha/checkout-services**](https://github.com/Sourjya-Saha/checkout-services) | Production FastAPI microservice, Next.js storefront, and SentinelOps Command Center HUD. |
 
 ---
 
@@ -28,7 +39,7 @@
 ```mermaid
 flowchart TD
     subgraph TriggerLayer ["1. INCIDENT INGESTION"]
-        Alert["Production Alert / Error Spike<br/>(TypeError / KeyError / 500)"] --> Dispatcher["TrueForge Event Router"]
+        Alert["Production Alert / Error Spike<br/>(KeyError / TypeError / 500)"] --> Dispatcher["TrueForge Event Router"]
     end
 
     subgraph SkillSelection ["2. SKILL ACTIVATION"]
@@ -52,7 +63,7 @@ flowchart TD
 
     subgraph DaytonaIsolation ["5. DAYTONA LINUX SANDBOX (ISOLATED)"]
         CheckpointA -->|Approved by Commander| Daytona["Daytona Linux MicroVM<br/>- 1. Clone working copy<br/>- 2. pip install requirements<br/>- 3. Actively Reproduce Bug in Sandbox<br/>- 4. Apply candidate patch<br/>- 5. Re-run pytest backend/tests"]
-        Daytona -->|All 10 Tests Pass| Proof["Sandbox Verification Proof (100% OK)"]
+        Daytona -->|All 11 Tests Pass| Proof["Sandbox Verification Proof (100% OK)"]
     end
 
     subgraph Gate2 ["6. CHECKPOINT B (APPROVAL GATE 2)"]
@@ -80,7 +91,7 @@ flowchart TD
 
 * **Path:** [`skills/incident-runbook/SKILL.md`](skills/incident-runbook/SKILL.md)
 * **Target Repository:** `Sourjya-Saha/checkout-services`
-* **Trigger:** Production error spikes, promo coupon calculations, regional tax exceptions, failed checkouts, or `/investigate` slash commands.
+* **Trigger:** Production error spikes, shipping tier lookup errors, promo coupon calculations, regional tax exceptions, failed checkouts, or `/investigate` slash commands.
 
 ### Execution Lifecycle:
 
@@ -89,13 +100,13 @@ flowchart TD
 * Extracts the impacted code files from the exception traceback (`backend/app/payment_processor.py`).
 
 #### Step 1 — Session Opening & Incident Tagging
-* Generates a unique incident ID format (e.g. `INC-20260828-checkout`).
+* Generates a unique incident ID format (e.g. `INC-20260828-shipping-uk-express`).
 * Emits real-time SSE telemetry to the SentinelOps Command HUD.
 
 #### Step 2 — Parallel Subagent Swarm Evidence Gathering
 The commander launches three specialized subagents simultaneously:
-1. **Subagent Alpha (`GIT-SENTINEL`)**: Interrogates recent commits on `main` via GitHub MCP tools (`list_commits`, `get_commit`) and identifies recent refactors (e.g. commit `55d66d8`).
-2. **Subagent Bravo (`LOG-TRACE`)**: Parses exception tracebacks and isolates runtime stack frames (e.g. line 111 `apply_promo_discount`).
+1. **Subagent Alpha (`GIT-SENTINEL`)**: Interrogates recent commits on `main` via GitHub MCP tools (`list_commits`, `get_commit`) and identifies recent refactors (e.g. commit `b297d3f` titled `feat: add UK Express shipping option to checkout UI`).
+2. **Subagent Bravo (`LOG-TRACE`)**: Parses exception tracebacks and isolates runtime stack frames (e.g. line 128 `KeyError: 'UK_EXPRESS'` in `calculate_shipping_fee`).
 3. **Subagent Charlie (`DATA-CORE`)**: Queries Supabase PostgreSQL `orders` and `users` tables to correlate failed checkout transactions.
 
 #### Step 3 — Hypothesis Formulation & Checkpoint A
@@ -108,8 +119,8 @@ Once Checkpoint A is approved:
 1. **Clones working copy** into `/tmp/checkout-services` inside the Daytona Linux MicroVM.
 2. **Installs dependencies**: `pip install -r backend/requirements.txt`.
 3. **Actively reproduces the bug in the sandbox**: Runs `pytest backend/tests/test_checkout.py` to verify reproduction of the exception in the isolated environment.
-4. **Applies candidate patch** in `payment_processor.py`.
-5. **Verifies fix**: Executes `pytest backend/tests` to prove all 10 unit tests pass (100% OK).
+4. **Applies candidate patch** in `payment_processor.py` adding `"UK_EXPRESS": 19.99` and safe `.get()` normalization.
+5. **Verifies fix**: Executes `pytest backend/tests` to prove all 11 unit tests pass (100% OK).
 
 #### Step 5 — Checkpoint B (PR Gate)
 * **PAUSES EXECUTION for Checkpoint B**:
@@ -182,7 +193,7 @@ SentinelOps enforces a **strict physical separation** between sandbox compute an
                                              1. pip install deps
                                              2. Actively reproduce bug
                                              3. Apply candidate fix
-                                             4. Run pytest suite (10/10 pass)
+                                             4. Run pytest suite (11/11 pass)
                                                        │
                                                        ▼
         ╔══════════════════════════════════════════════════════════╗
@@ -208,6 +219,7 @@ SentinelOps enforces a **strict physical separation** between sandbox compute an
 
 | Supabase Incident ID | Exception & Failure Mode | Daytona Sandbox Proof | Human Approval | Target GitHub PR | Qodo AI Review | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **`INC-20260828-shipping-uk-express`** | `KeyError: 'UK_EXPRESS'` in `calculate_shipping_fee` | 100% test suites passed (11/11 OK) | Checkpoint A & B Approved | [**PR #14**](https://github.com/Sourjya-Saha/checkout-services/pull/14) | **APPROVED (0 BUGS / 0 HIGHS)** | **RESOLVED [OK]** |
 | **`INC-20260828-checkout`** | `TypeError: unsupported operand type(s) for *: 'float' and 'dict'` | 100% test suites passed (10/10 OK) | Checkpoint A & B Approved | [**PR #13**](https://github.com/Sourjya-Saha/checkout-services/pull/13) | **APPROVED (0 BUGS / 0 HIGHS)** | **RESOLVED [OK]** |
 | **`INC-20260826-9448`** | `TypeError: unsupported operand type(s) for *: 'float' and 'dict'` | 100% test suites passed (9/9 OK) | Checkpoint A & B Approved | [**PR #12**](https://github.com/Sourjya-Saha/checkout-services/pull/12) | **APPROVED (0 HIGHS)** | **RESOLVED [OK]** |
 | **`INC-20260826-1338`** | `TypeError: 'NoneType' object is not subscriptable` | 100% test suites passed (8/8 OK) | Checkpoint A & B Approved | [**PR #11**](https://github.com/Sourjya-Saha/checkout-services/pull/11) | **APPROVED (0 HIGHS)** | **RESOLVED [OK]** |
