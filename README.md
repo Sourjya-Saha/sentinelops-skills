@@ -1,6 +1,6 @@
 # SentinelOps Agent Skills: Autonomous Runbooks & Playbooks
 
-[![Demo Video](https://img.shields.io/badge/YouTube-Demonstration_Video-FF0000?logo=youtube)](https://youtu.be/bMqu_hqA3go)
+[![Demo Video](https://img.shields.io/badge/YouTube-Demonstration_Video-FF0000?logo=youtube)](https://youtu.be/56APidqiMC0)
 [![Skills Repo](https://img.shields.io/badge/GitHub-sentinelops--skills-181717?logo=github)](https://github.com/Sourjya-Saha/sentinelops-skills)
 [![Checkout Service Repo](https://img.shields.io/badge/GitHub-checkout--services-181717?logo=github)](https://github.com/Sourjya-Saha/checkout-services)
 [![TrueForge](https://img.shields.io/badge/TrueForge-Agent_Skills-DC2626)](https://truefoundry.com/)
@@ -17,7 +17,7 @@
 
 Watch SentinelOps autonomously detect, isolate, sandbox, verify, and resolve a live production checkout outage end-to-end:
 
-▶️ **YouTube Video Link**: [**https://youtu.be/bMqu_hqA3go**](https://youtu.be/bMqu_hqA3go)
+▶️ **YouTube Video Link**: [**https://youtu.be/56APidqiMC0**](https://youtu.be/56APidqiMC0)
 
 ---
 
