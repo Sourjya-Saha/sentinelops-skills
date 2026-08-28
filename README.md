@@ -1,5 +1,6 @@
 # SentinelOps Agent Skills: Autonomous Runbooks & Playbooks
 
+[![Demo Video](https://img.shields.io/badge/YouTube-Demonstration_Video-FF0000?logo=youtube)](https://youtu.be/yeeHMPeY1Ww)
 [![Skills Repo](https://img.shields.io/badge/GitHub-sentinelops--skills-181717?logo=github)](https://github.com/Sourjya-Saha/sentinelops-skills)
 [![Checkout Service Repo](https://img.shields.io/badge/GitHub-checkout--services-181717?logo=github)](https://github.com/Sourjya-Saha/checkout-services)
 [![TrueForge](https://img.shields.io/badge/TrueForge-Agent_Skills-DC2626)](https://truefoundry.com/)
@@ -9,6 +10,14 @@
 [![Qodo AI](https://img.shields.io/badge/Qodo_AI-PR_Review_Verified-10B981)](https://qodo.ai/)
 
 > This repository contains the **TrueForge Agent Skills** and standard operating procedures (SOPs) for **SentinelOps**, an autonomous SRE incident response agent designed for enterprise production microservice ecosystems.
+
+---
+
+## 🎥 Live Demonstration Video
+
+Watch SentinelOps autonomously detect, isolate, sandbox, verify, and resolve a live production checkout outage end-to-end:
+
+▶️ **YouTube Video Link**: [**https://youtu.be/yeeHMPeY1Ww**](https://youtu.be/yeeHMPeY1Ww)
 
 ---
 
