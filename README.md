@@ -17,7 +17,7 @@
 4. [Sandbox Isolation vs. GitHub MCP Boundary](#4-sandbox-isolation-vs-github-mcp-boundary)
 5. [Two-Stage Human-in-the-Loop Approval Protocol](#5-two-stage-human-in-the-loop-approval-protocol)
 6. [Autonomous Incident Response Ledger](#6-autonomous-incident-response-ledger)
-7. [Visual Evidence & HUD Execution Stream](#7-visual-evidence--hud-execution-stream)
+7. [Visual Evidence & Qodo AI Code Review Stream](#7-visual-evidence--qodo-ai-code-review-stream)
 8. [TrueForge Agent Configuration (`agent.yaml` & `manifest.json`)](#8-trueforge-agent-configuration-agentyaml--manifestjson)
 9. [Installation & Deployment](#9-installation--deployment)
 
@@ -52,7 +52,7 @@ flowchart TD
 
     subgraph DaytonaIsolation ["5. DAYTONA LINUX SANDBOX (ISOLATED)"]
         CheckpointA -->|Approved by Commander| Daytona["Daytona Linux MicroVM<br/>- 1. Clone working copy<br/>- 2. pip install requirements<br/>- 3. Actively Reproduce Bug in Sandbox<br/>- 4. Apply candidate patch<br/>- 5. Re-run pytest backend/tests"]
-        Daytona -->|All 9 Tests Pass| Proof["Sandbox Verification Proof (100% OK)"]
+        Daytona -->|All 10 Tests Pass| Proof["Sandbox Verification Proof (100% OK)"]
     end
 
     subgraph Gate2 ["6. CHECKPOINT B (APPROVAL GATE 2)"]
@@ -61,7 +61,7 @@ flowchart TD
 
     subgraph GitHubAndQodo ["7. GITHUB MCP & PERSISTENT MEMORY"]
         CheckpointB -->|Approved by Commander| GitHubMCP["TrueForge GitHub MCP Connector<br/>push_files + create_pull_request"]
-        GitHubMCP --> QodoReview["Qodo AI Automated PR Review"]
+        GitHubMCP --> QodoReview["Qodo AI Automated PR Review & Flowchart"]
         QodoReview --> SupabaseMemory[("Supabase PostgreSQL DB<br/>Table: incidents")]
     end
 
@@ -80,7 +80,7 @@ flowchart TD
 
 * **Path:** [`skills/incident-runbook/SKILL.md`](skills/incident-runbook/SKILL.md)
 * **Target Repository:** `Sourjya-Saha/checkout-services`
-* **Trigger:** Production error spikes, regional tax calculation exceptions, failed checkouts, or `/investigate` slash commands.
+* **Trigger:** Production error spikes, promo coupon calculations, regional tax exceptions, failed checkouts, or `/investigate` slash commands.
 
 ### Execution Lifecycle:
 
@@ -89,14 +89,14 @@ flowchart TD
 * Extracts the impacted code files from the exception traceback (`backend/app/payment_processor.py`).
 
 #### Step 1 — Session Opening & Incident Tagging
-* Generates a unique incident ID format (e.g. `INC-20260826-9448`).
+* Generates a unique incident ID format (e.g. `INC-20260828-checkout`).
 * Emits real-time SSE telemetry to the SentinelOps Command HUD.
 
 #### Step 2 — Parallel Subagent Swarm Evidence Gathering
 The commander launches three specialized subagents simultaneously:
-1. **Subagent Alpha (`GIT-SENTINEL`)**: Interrogates recent commits on `main` via GitHub MCP tools (`list_commits`, `get_commit`).
-2. **Subagent Bravo (`LOG-TRACE`)**: Parses exception tracebacks and isolates runtime stack frames.
-3. **Subagent Charlie (`DATA-CORE`)**: Queries Supabase PostgreSQL `orders` and `users` tables to correlate failed transactions.
+1. **Subagent Alpha (`GIT-SENTINEL`)**: Interrogates recent commits on `main` via GitHub MCP tools (`list_commits`, `get_commit`) and identifies recent refactors (e.g. commit `55d66d8`).
+2. **Subagent Bravo (`LOG-TRACE`)**: Parses exception tracebacks and isolates runtime stack frames (e.g. line 111 `apply_promo_discount`).
+3. **Subagent Charlie (`DATA-CORE`)**: Queries Supabase PostgreSQL `orders` and `users` tables to correlate failed checkout transactions.
 
 #### Step 3 — Hypothesis Formulation & Checkpoint A
 * Synthesizes findings into a unified root-cause hypothesis.
@@ -109,7 +109,7 @@ Once Checkpoint A is approved:
 2. **Installs dependencies**: `pip install -r backend/requirements.txt`.
 3. **Actively reproduces the bug in the sandbox**: Runs `pytest backend/tests/test_checkout.py` to verify reproduction of the exception in the isolated environment.
 4. **Applies candidate patch** in `payment_processor.py`.
-5. **Verifies fix**: Executes `pytest backend/tests` to prove all unit tests pass (100% OK).
+5. **Verifies fix**: Executes `pytest backend/tests` to prove all 10 unit tests pass (100% OK).
 
 #### Step 5 — Checkpoint B (PR Gate)
 * **PAUSES EXECUTION for Checkpoint B**:
@@ -182,7 +182,7 @@ SentinelOps enforces a **strict physical separation** between sandbox compute an
                                              1. pip install deps
                                              2. Actively reproduce bug
                                              3. Apply candidate fix
-                                             4. Run pytest suite (9/9 pass)
+                                             4. Run pytest suite (10/10 pass)
                                                        │
                                                        ▼
         ╔══════════════════════════════════════════════════════════╗
@@ -208,16 +208,17 @@ SentinelOps enforces a **strict physical separation** between sandbox compute an
 
 | Supabase Incident ID | Exception & Failure Mode | Daytona Sandbox Proof | Human Approval | Target GitHub PR | Qodo AI Review | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`INC-20260826-9448`** | `TypeError: unsupported operand type(s) for *: 'float' and 'dict'` | 100% test suites passed (9/9 OK) | Checkpoint A & B Approved | [PR #12](https://github.com/Sourjya-Saha/checkout-services/pull/12) | **APPROVED (0 HIGHS)** | **RESOLVED [OK]** |
-| **`INC-20260826-1338`** | `TypeError: 'NoneType' object is not subscriptable` | 100% test suites passed (8/8 OK) | Checkpoint A & B Approved | [PR #11](https://github.com/Sourjya-Saha/checkout-services/pull/11) | **APPROVED (0 HIGHS)** | **RESOLVED [OK]** |
-| **`INC-20260826-3780`** | `KeyError: 'STANDARD'` in `calculate_carbon_offset` | 100% test suites passed (8/8 OK) | Checkpoint A & B Approved | [PR #10](https://github.com/Sourjya-Saha/checkout-services/pull/10) | **APPROVED (0 HIGHS)** | **RESOLVED [OK]** |
-| **`INC-20260826-8855`** | `KeyError: 'STANDARD'` in `calculate_packaging_fee` | 100% test suites passed (8/8 OK) | Checkpoint A & B Approved | [PR #9](https://github.com/Sourjya-Saha/checkout-services/pull/9) | **APPROVED (0 HIGHS)** | **RESOLVED [OK]** |
-| **`INC-20260826-checkout`** | `500 KeyError in payment_processor.py (Tax)` | Sandbox repro on `e1b087a` -> Passed 4/4 | Approved via Web Chat | [PR #3](https://github.com/Sourjya-Saha/checkout-services/pull/3) | **APPROVED (0 HIGHS)** | **RESOLVED [OK]** |
-| **`INC-20260825-621`** | `500 Error in payment_processor.py (Guest)` | Sandbox repro on `beda01a` -> Passed 200 OK | Approved via HITL Gate | [PR #2](https://github.com/Sourjya-Saha/checkout-services/pull/2) | **APPROVED (0 HIGHS)** | **RESOLVED [OK]** |
+| **`INC-20260828-checkout`** | `TypeError: unsupported operand type(s) for *: 'float' and 'dict'` | 100% test suites passed (10/10 OK) | Checkpoint A & B Approved | [**PR #13**](https://github.com/Sourjya-Saha/checkout-services/pull/13) | **APPROVED (0 BUGS / 0 HIGHS)** | **RESOLVED [OK]** |
+| **`INC-20260826-9448`** | `TypeError: unsupported operand type(s) for *: 'float' and 'dict'` | 100% test suites passed (9/9 OK) | Checkpoint A & B Approved | [**PR #12**](https://github.com/Sourjya-Saha/checkout-services/pull/12) | **APPROVED (0 HIGHS)** | **RESOLVED [OK]** |
+| **`INC-20260826-1338`** | `TypeError: 'NoneType' object is not subscriptable` | 100% test suites passed (8/8 OK) | Checkpoint A & B Approved | [**PR #11**](https://github.com/Sourjya-Saha/checkout-services/pull/11) | **APPROVED (0 HIGHS)** | **RESOLVED [OK]** |
+| **`INC-20260826-3780`** | `KeyError: 'STANDARD'` in `calculate_carbon_offset` | 100% test suites passed (8/8 OK) | Checkpoint A & B Approved | [**PR #10**](https://github.com/Sourjya-Saha/checkout-services/pull/10) | **APPROVED (0 HIGHS)** | **RESOLVED [OK]** |
+| **`INC-20260826-8855`** | `KeyError: 'STANDARD'` in `calculate_packaging_fee` | 100% test suites passed (8/8 OK) | Checkpoint A & B Approved | [**PR #9**](https://github.com/Sourjya-Saha/checkout-services/pull/9) | **APPROVED (0 HIGHS)** | **RESOLVED [OK]** |
+| **`INC-20260826-checkout`** | `500 KeyError in payment_processor.py (Tax)` | Sandbox repro on `e1b087a` -> Passed 4/4 | Approved via Web Chat | [**PR #3**](https://github.com/Sourjya-Saha/checkout-services/pull/3) | **APPROVED (0 HIGHS)** | **RESOLVED [OK]** |
+| **`INC-20260825-621`** | `500 Error in payment_processor.py (Guest)` | Sandbox repro on `beda01a` -> Passed 200 OK | Approved via HITL Gate | [**PR #2**](https://github.com/Sourjya-Saha/checkout-services/pull/2) | **APPROVED (0 HIGHS)** | **RESOLVED [OK]** |
 
 ---
 
-## 7. Visual Evidence & HUD Execution Stream
+## 7. Visual Evidence & Qodo AI Code Review Stream
 
 ### 1. SentinelOps Interactive Landing Experience
 ![SentinelOps Landing Experience](docs/landingpage.png)
@@ -239,22 +240,27 @@ SentinelOps enforces a **strict physical separation** between sandbox compute an
 
 ---
 
-### 5. Automated Pull Request Creation via GitHub MCP
-![Pull Request Creation](docs/pr_req1.png)
+### 5. Automated Qodo AI Code Review & PR Summary
+![Qodo AI PR Summary](docs/qodo_pr_summary.png)
 
 ---
 
-### 6. Qodo AI Automated Code Review & Analysis
-![Qodo AI Code Review](docs/pr_req2.png)
+### 6. Qodo AI Automated Decision Logic Flowchart
+![Qodo AI Logic Diagram](docs/qodo_logic_diagram.png)
 
 ---
 
-### 7. Supabase Persistent Memory Ledger
+### 7. Qodo AI Code Review Approval (0 Issues Found)
+![Qodo AI Code Review Approved](docs/qodo_code_review_approved.png)
+
+---
+
+### 8. Supabase Persistent Memory Ledger
 ![Postmortem Incident Ledger](docs/sentinleops_incident.png)
 
 ---
 
-### 8. TrueForge Agent Harness & Daytona MicroVM Instances
+### 9. TrueForge Agent Harness & Daytona MicroVM Instances
 ![TrueForge Runtime Interface](docs/trueforge_1.png)
 ![TrueForge Sandbox Compute](docs/trueforge_2.png)
 
