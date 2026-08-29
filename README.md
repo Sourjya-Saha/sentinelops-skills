@@ -1,6 +1,8 @@
 # SentinelOps Agent Skills: Autonomous Runbooks & Playbooks
 
 [![Demo Video](https://img.shields.io/badge/YouTube-Demonstration_Video-FF0000?logo=youtube)](https://youtu.be/56APidqiMC0)
+[![Live Frontend](https://img.shields.io/badge/Vercel-Live_Storefront_%26_HUD-000000?logo=vercel)](https://sentinel-ops-wine.vercel.app/)
+[![Live Backend](https://img.shields.io/badge/Render-Live_FastAPI_Backend-46E3B7?logo=render)](https://checkout-services-backend.onrender.com/)
 [![Skills Repo](https://img.shields.io/badge/GitHub-sentinelops--skills-181717?logo=github)](https://github.com/Sourjya-Saha/sentinelops-skills)
 [![Checkout Service Repo](https://img.shields.io/badge/GitHub-checkout--services-181717?logo=github)](https://github.com/Sourjya-Saha/checkout-services)
 [![TrueForge](https://img.shields.io/badge/TrueForge-Agent_Skills-DC2626)](https://truefoundry.com/)
@@ -18,6 +20,16 @@
 Watch SentinelOps autonomously detect, isolate, sandbox, verify, and resolve a live production checkout outage end-to-end:
 
 ▶️ **YouTube Video Link**: [**https://youtu.be/56APidqiMC0**](https://youtu.be/56APidqiMC0)
+
+---
+
+## 🌐 Live Deployed Environments
+
+| Service | Platform | Live URL | Status |
+| :--- | :--- | :--- | :--- |
+| **Storefront, HUD & Ledger** | **Vercel** | [**https://sentinel-ops-wine.vercel.app**](https://sentinel-ops-wine.vercel.app/) | `ONLINE (Production)` |
+| **FastAPI Microservice API** | **Render** | [**https://checkout-services-backend.onrender.com**](https://checkout-services-backend.onrender.com/) | `ONLINE (Production)` |
+| **PostgreSQL Persistent Memory** | **Supabase** | `caiqpxvqnidwrnayaypm.supabase.co` | `ONLINE (Production)` |
 
 ---
 
