@@ -29,7 +29,6 @@ Watch SentinelOps autonomously detect, isolate, sandbox, verify, and resolve a l
 | :--- | :--- | :--- | :--- |
 | **Storefront, HUD & Ledger** | **Vercel** | [**https://sentinel-ops-wine.vercel.app**](https://sentinel-ops-wine.vercel.app/) | `ONLINE (Production)` |
 | **FastAPI Microservice API** | **Render** | [**https://checkout-services-backend.onrender.com**](https://checkout-services-backend.onrender.com/) | `ONLINE (Production)` |
-| **PostgreSQL Persistent Memory** | **Supabase** | `caiqpxvqnidwrnayaypm.supabase.co` | `ONLINE (Production)` |
 
 ---
 
